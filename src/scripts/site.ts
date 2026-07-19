@@ -1,6 +1,10 @@
 const root = document.documentElement;
 const body = document.body;
 const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
+const heroSequence = document.querySelector<HTMLElement>('[data-hero-sequence]');
+const heroSticky = document.querySelector<HTMLElement>('[data-hero-sticky]');
+const entryOrb = document.querySelector<HTMLElement>('.entry-orb');
+let heroProgress = 0;
 
 const storage = {
   get(key: string) {
@@ -78,11 +82,183 @@ if (!Number.isFinite(volume)) volume = 0.25;
 volume = Math.min(1, Math.max(0, volume));
 let muted = storage.get('kanzaler-music-muted') === 'true';
 
+type WebkitAudioWindow = Window & typeof globalThis & { webkitAudioContext?: typeof AudioContext };
+type AudioGraphState = 'native' | 'active' | 'bypass' | 'unsupported';
+const AudioContextConstructor = window.AudioContext ?? (window as WebkitAudioWindow).webkitAudioContext;
+let audioContext: AudioContext | null = null;
+let mediaSource: MediaElementAudioSourceNode | null = null;
+let analyser: AnalyserNode | null = null;
+let analyserBins: Uint8Array<ArrayBuffer> | null = null;
+let graphState: AudioGraphState = 'native';
+let graphPromise: Promise<boolean> | null = null;
+let analyserUnlockListening = false;
+let audioVisualFrame = 0;
+let bassEnvelope = 0;
+
 if (audio) {
   audio.volume = muted ? 0 : volume;
   audio.muted = muted;
 }
 if (musicVolume) musicVolume.value = String(Math.round(volume * 100));
+
+function setAudioCss(level = 0) {
+  if (!heroSequence) return;
+  const safeLevel = Math.max(0, Math.min(1, Number.isFinite(level) ? level : 0));
+  heroSequence.style.setProperty('--audio-scale', (1 + safeLevel * 0.052).toFixed(4));
+  heroSequence.style.setProperty('--audio-glow', `${(88 + safeLevel * 76).toFixed(1)}px`);
+  heroSequence.style.setProperty('--audio-brightness', (1 + safeLevel * 0.2).toFixed(3));
+}
+
+function canSampleAudio() {
+  return Boolean(
+    analyser
+    && analyserBins
+    && audioContext?.state === 'running'
+    && actuallyPlaying
+    && !muted
+    && volume > 0
+    && heroProgress < 0.68
+    && !document.hidden
+    && !reduceMotion.matches,
+  );
+}
+
+function sampleAudio() {
+  audioVisualFrame = 0;
+  if (!canSampleAudio() || !analyser || !analyserBins || !audioContext) {
+    bassEnvelope *= 0.72;
+    setAudioCss(bassEnvelope);
+    return;
+  }
+
+  analyser.getByteFrequencyData(analyserBins);
+  const binWidth = audioContext.sampleRate / analyser.fftSize;
+  const firstBin = Math.max(1, Math.ceil(45 / binWidth));
+  const lastBin = Math.min(analyserBins.length - 1, Math.floor(220 / binWidth));
+  let energy = 0;
+  let count = 0;
+  for (let index = firstBin; index <= lastBin; index += 1) {
+    const normalized = analyserBins[index] / 255;
+    energy += normalized * normalized;
+    count += 1;
+  }
+  const rms = count > 0 ? Math.sqrt(energy / count) : 0;
+  const target = Math.max(0, Math.min(1, (rms - 0.055) / 0.46));
+  bassEnvelope += (target - bassEnvelope) * (target > bassEnvelope ? 0.28 : 0.07);
+  setAudioCss(bassEnvelope);
+  audioVisualFrame = requestAnimationFrame(sampleAudio);
+}
+
+function syncAudioVisualization() {
+  if (canSampleAudio()) {
+    if (!audioVisualFrame) audioVisualFrame = requestAnimationFrame(sampleAudio);
+    return;
+  }
+  cancelAnimationFrame(audioVisualFrame);
+  audioVisualFrame = 0;
+  bassEnvelope = 0;
+  setAudioCss(0);
+}
+
+function removeAnalyserUnlock() {
+  if (!analyserUnlockListening) return;
+  analyserUnlockListening = false;
+  document.removeEventListener('pointerdown', handleAnalyserUnlock, true);
+  document.removeEventListener('touchstart', handleAnalyserUnlock, true);
+  document.removeEventListener('keydown', handleAnalyserUnlock, true);
+}
+
+function installAnalyserUnlock() {
+  if (analyserUnlockListening || reduceMotion.matches || graphState === 'active' || graphState === 'unsupported' || graphState === 'bypass') return;
+  analyserUnlockListening = true;
+  document.addEventListener('pointerdown', handleAnalyserUnlock, true);
+  document.addEventListener('touchstart', handleAnalyserUnlock, true);
+  document.addEventListener('keydown', handleAnalyserUnlock, true);
+}
+
+async function ensureAnalyser(fromGesture = false): Promise<boolean> {
+  if (!audio || reduceMotion.matches) return false;
+  if (graphState === 'active') {
+    if (fromGesture && audioContext?.state !== 'running') {
+      try {
+        await audioContext?.resume();
+      } catch {
+        installAnalyserUnlock();
+      }
+    }
+    syncAudioVisualization();
+    return audioContext?.state === 'running';
+  }
+  if (graphState === 'unsupported' || graphState === 'bypass') return false;
+  if (graphPromise) return graphPromise;
+
+  graphPromise = (async () => {
+    if (!AudioContextConstructor) {
+      graphState = 'unsupported';
+      if (entryOrb) entryOrb.dataset.audioState = graphState;
+      return false;
+    }
+
+    try {
+      audioContext ??= new AudioContextConstructor();
+      if (audioContext.state !== 'running' && !fromGesture) {
+        installAnalyserUnlock();
+        return false;
+      }
+      if (audioContext.state !== 'running') await audioContext.resume();
+      if (audioContext.state !== 'running') {
+        installAnalyserUnlock();
+        return false;
+      }
+
+      if (!mediaSource) mediaSource = audioContext.createMediaElementSource(audio);
+      if (!analyser) {
+        const nextAnalyser = audioContext.createAnalyser();
+        nextAnalyser.fftSize = 1024;
+        nextAnalyser.smoothingTimeConstant = 0.78;
+        nextAnalyser.minDecibels = -90;
+        nextAnalyser.maxDecibels = -20;
+        try {
+          mediaSource.connect(nextAnalyser);
+          nextAnalyser.connect(audioContext.destination);
+          analyser = nextAnalyser;
+          analyserBins = new Uint8Array(nextAnalyser.frequencyBinCount);
+        } catch {
+          mediaSource.disconnect();
+          mediaSource.connect(audioContext.destination);
+          graphState = 'bypass';
+          if (entryOrb) entryOrb.dataset.audioState = graphState;
+          return false;
+        }
+      }
+
+      graphState = 'active';
+      if (entryOrb) entryOrb.dataset.audioState = graphState;
+      removeAnalyserUnlock();
+      audioContext.onstatechange = () => {
+        if (audioContext?.state === 'running') {
+          syncAudioVisualization();
+        } else {
+          syncAudioVisualization();
+          installAnalyserUnlock();
+        }
+      };
+      syncAudioVisualization();
+      return true;
+    } catch {
+      installAnalyserUnlock();
+      return false;
+    }
+  })().finally(() => {
+    graphPromise = null;
+  });
+
+  return graphPromise;
+}
+
+function handleAnalyserUnlock() {
+  void ensureAnalyser(true);
+}
 
 function updateMusicUi(state: 'playing' | 'paused' | 'muted' | 'blocked') {
   if (!musicToggle || !musicStatus) return;
@@ -97,6 +273,12 @@ function updateMusicUi(state: 'playing' | 'paused' | 'muted' | 'blocked') {
   } as const;
   musicToggle.setAttribute('aria-label', copy[state][0]);
   musicStatus.textContent = copy[state][1];
+  if (heroSequence) heroSequence.dataset.audioActive = String(state === 'playing');
+  if (state === 'playing') {
+    void ensureAnalyser(false);
+    installAnalyserUnlock();
+  }
+  syncAudioVisualization();
 }
 
 function fadeAudio(target: number, duration = 1100) {
@@ -108,7 +290,7 @@ function fadeAudio(target: number, duration = 1100) {
   const initial = audio.volume;
   const start = performance.now();
   const tick = (time: number) => {
-    const progress = Math.min(1, (time - start) / duration);
+    const progress = Math.min(1, Math.max(0, (time - start) / duration));
     const eased = 1 - Math.pow(1 - progress, 3);
     audio.volume = initial + (target - initial) * eased;
     if (progress < 1) fadeFrame = requestAnimationFrame(tick);
@@ -180,7 +362,9 @@ async function handleAudioUnlock(event: Event) {
   const target = event.target;
   if (target instanceof Element && target.closest('.music-control')) return;
   unlockInFlight = true;
+  const graphReady = ensureAnalyser(true);
   const played = await startAudio();
+  await graphReady;
   unlockInFlight = false;
   if (played) removeAudioUnlock();
 }
@@ -192,9 +376,11 @@ function pauseAudio() {
   removeAudioUnlock();
   audio.pause();
   updateMusicUi('paused');
+  syncAudioVisualization();
 }
 
 musicToggle?.addEventListener('click', async () => {
+  void ensureAnalyser(true);
   if (actuallyPlaying && !muted) {
     pauseAudio();
     return;
@@ -214,6 +400,7 @@ musicToggle?.addEventListener('click', async () => {
 });
 
 musicVolume?.addEventListener('input', async () => {
+  void ensureAnalyser(true);
   volume = Math.max(0, Math.min(1, Number(musicVolume.value) / 100));
   storage.set('kanzaler-music-volume', String(volume));
   muted = volume === 0;
@@ -229,6 +416,7 @@ musicVolume?.addEventListener('input', async () => {
   } else {
     await startAudio();
   }
+  syncAudioVisualization();
 });
 
 audio?.addEventListener('pause', () => {
@@ -239,6 +427,7 @@ audio?.addEventListener('ended', () => {
   actuallyPlaying = false;
   updateMusicUi('paused');
 });
+document.addEventListener('visibilitychange', syncAudioVisualization);
 updateMusicUi(muted ? 'muted' : 'paused');
 
 // Try audible autoplay immediately. If the browser blocks it, the first real
@@ -246,15 +435,77 @@ updateMusicUi(muted ? 'muted' : 'paused');
 void startAudio();
 
 const overviewButton = document.querySelector<HTMLButtonElement>('#scroll-to-overview');
-const overview = document.querySelector<HTMLElement>('#overview');
 overviewButton?.addEventListener('click', () => {
   if (!actuallyPlaying) void startAudio();
-  if (!overview) return;
+  void ensureAnalyser(true);
+  if (!heroSequence || !heroSticky) return;
+  const travel = Math.max(1, heroSequence.offsetHeight - heroSticky.offsetHeight);
   window.scrollTo({
-    top: overview.offsetTop,
+    top: heroSequence.offsetTop + travel * 0.94,
     behavior: reduceMotion.matches ? 'auto' : 'smooth',
   });
 });
+
+// One sticky starry scene, sampled from scroll position in both directions.
+let heroRenderFrame = 0;
+const clamp = (value: number, minimum = 0, maximum = 1) => Math.min(maximum, Math.max(minimum, value));
+const smoothstep = (start: number, end: number, value: number) => {
+  const time = clamp((value - start) / (end - start));
+  return time * time * (3 - 2 * time);
+};
+const mix = (start: number, end: number, time: number) => start + (end - start) * time;
+
+function renderHeroSequence() {
+  heroRenderFrame = 0;
+  if (!heroSequence || !heroSticky) return;
+  const travel = Math.max(1, heroSequence.offsetHeight - heroSticky.offsetHeight);
+  const nextProgress = clamp((window.scrollY - heroSequence.offsetTop) / travel);
+  heroProgress = nextProgress;
+
+  const compact = window.innerWidth <= 780;
+  const reduced = reduceMotion.matches;
+  const motion = reduced ? (nextProgress >= 0.5 ? 1 : 0) : smoothstep(0.12, 0.76, nextProgress);
+  const orbExit = reduced ? motion : smoothstep(0.12, 0.62, nextProgress);
+  const buttonExit = reduced ? motion : smoothstep(0.08, 0.34, nextProgress);
+  const deckReveal = reduced ? motion : smoothstep(0.38, 0.84, nextProgress);
+  const hazeReveal = reduced ? motion : smoothstep(0.42, 0.9, nextProgress);
+
+  const initialX = window.innerWidth * 0.5;
+  const finalX = window.innerWidth * (compact ? 0.5 : window.innerWidth <= 1100 ? 0.4 : 0.35);
+  const initialY = window.innerHeight * 0.42;
+  const finalY = window.innerHeight * (compact ? 0.245 : 0.34);
+  const copyMotion = motion;
+
+  heroSequence.style.setProperty('--hero-progress', nextProgress.toFixed(4));
+  heroSequence.style.setProperty('--orb-opacity', (1 - orbExit).toFixed(4));
+  heroSequence.style.setProperty('--orb-scale', mix(1, compact ? 1.38 : 1.62, orbExit).toFixed(4));
+  heroSequence.style.setProperty('--orb-blur', `${mix(0, 6, orbExit).toFixed(2)}px`);
+  heroSequence.style.setProperty('--copy-x', `${mix(initialX, finalX, copyMotion).toFixed(2)}px`);
+  heroSequence.style.setProperty('--copy-y', `${mix(initialY, finalY, copyMotion).toFixed(2)}px`);
+  heroSequence.style.setProperty('--copy-scale', mix(1, compact ? 1.02 : 1.1, copyMotion).toFixed(4));
+  heroSequence.style.setProperty('--button-opacity', (1 - buttonExit).toFixed(4));
+  heroSequence.style.setProperty('--button-y', `${mix(0, 18, buttonExit).toFixed(2)}px`);
+  heroSequence.style.setProperty('--button-scale', mix(1, 0.82, buttonExit).toFixed(4));
+  heroSequence.style.setProperty('--deck-opacity', deckReveal.toFixed(4));
+  heroSequence.style.setProperty('--deck-y', `${mix(150, 0, deckReveal).toFixed(2)}px`);
+  heroSequence.style.setProperty('--deck-scale', mix(0.965, 1, deckReveal).toFixed(4));
+  heroSequence.style.setProperty('--haze-opacity', hazeReveal.toFixed(4));
+
+  const phase = nextProgress < 0.38 ? 'entry' : nextProgress < 0.74 ? 'morph' : 'overview';
+  heroSequence.dataset.heroPhase = phase;
+  overviewButton?.setAttribute('aria-hidden', String(phase !== 'entry'));
+  syncAudioVisualization();
+}
+
+function scheduleHeroRender() {
+  if (!heroRenderFrame) heroRenderFrame = requestAnimationFrame(renderHeroSequence);
+}
+
+renderHeroSequence();
+window.addEventListener('scroll', scheduleHeroRender, { passive: true });
+window.addEventListener('resize', scheduleHeroRender, { passive: true });
+window.addEventListener('orientationchange', scheduleHeroRender, { passive: true });
+window.addEventListener('pageshow', scheduleHeroRender);
 
 // Scroll reveals and active navigation
 const revealElements = document.querySelectorAll<HTMLElement>('[data-reveal]');
@@ -275,7 +526,7 @@ if (reduceMotion.matches || !('IntersectionObserver' in window)) {
   revealElements.forEach((element) => revealObserver.observe(element));
 }
 
-const sections = document.querySelectorAll<HTMLElement>('section[id]');
+const sections = document.querySelectorAll<HTMLElement>('[data-nav-section], .content-stage > section[id]');
 const navLinks = document.querySelectorAll<HTMLAnchorElement>('[data-nav-link]');
 if ('IntersectionObserver' in window) {
   const sectionObserver = new IntersectionObserver(

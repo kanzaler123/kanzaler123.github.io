@@ -16,20 +16,6 @@ const projects = siteContent.featuredProjects.map((project) => ({
   github: project.repo ? repoByName.get(project.repo) : undefined,
 }));
 const repoCount = githubSnapshot.repositories.length;
-const previewCards = [
-  {
-    id: 'about',
-    title: { en: 'About Kanzaler', zhCN: '关于 Kanzaler' },
-    subtitle: { en: 'Profile & links', zhCN: '简介与链接' },
-    imagePosition: '80% center',
-  },
-  ...projects.map((project) => ({
-    id: project.id,
-    title: project.title,
-    subtitle: project.category,
-    imagePosition: project.imagePosition,
-  })),
-];
 const petals = Array.from({ length: 26 }, (_, index) => ({
   left: (index * 37 + 4) % 100,
   delay: -((index * 1.73) % 18),
@@ -44,7 +30,7 @@ const petals = Array.from({ length: 26 }, (_, index) => ({
   title="Kanzaler — AI, learning, and imagination"
   description="A personal space for AI, learning, and imagination."
 >
-  <a class="skip-link" href="#overview">
+  <a class="skip-link" href="#projects">
     <span class="lang-copy lang-copy--en">Skip to content</span>
     <span class="lang-copy lang-copy--zh">跳到正文</span>
   </a>
@@ -129,31 +115,42 @@ const petals = Array.from({ length: 26 }, (_, index) => ({
   </header>
 
   <main>
-    <section id="home" class="hero" aria-labelledby="hero-title" data-nav-section="home">
-      <div class="hero-media" aria-hidden="true">
-        <Picture
-          src={heroBackground}
-          formats={['avif', 'webp']}
-          widths={[640, 960, 1280, 1672]}
-          sizes="100vw"
-          layout="full-width"
-          quality={82}
-          alt=""
-          loading="eager"
-          fetchpriority="high"
-          class="hero-image"
-        />
-      </div>
-      <div class="hero-vignette" aria-hidden="true"></div>
-      <div class="hero-haze" aria-hidden="true"></div>
+    <section
+      id="home"
+      class="hero-sequence"
+      aria-labelledby="hero-title"
+      data-hero-sequence
+      data-nav-section="home"
+      data-hero-phase="entry"
+    >
+      <div class="hero-sticky" data-hero-sticky>
+        <div class="hero-media" aria-hidden="true">
+          <Picture
+            src={heroBackground}
+            formats={['avif', 'webp']}
+            widths={[640, 960, 1280, 1672]}
+            sizes="100vw"
+            layout="full-width"
+            quality={82}
+            alt=""
+            loading="eager"
+            fetchpriority="high"
+            class="hero-image"
+          />
+        </div>
+        <div class="hero-vignette" aria-hidden="true"></div>
+        <div class="hero-haze" aria-hidden="true"></div>
+        <div class="overview-haze" aria-hidden="true"></div>
 
-      <div class="entry-panel">
-        <div class="entry-orb-wrap">
-          <div class="entry-orb" aria-hidden="true">
+        <div class="hero-orb-motion" data-testid="audio-orb">
+          <div class="entry-orb" data-audio-state="idle" aria-hidden="true">
             <i class="orb-ring orb-ring--outer"></i>
             <i class="orb-ring orb-ring--middle"></i>
             <i class="orb-ring orb-ring--inner"></i>
           </div>
+        </div>
+
+        <div class="hero-copy-motion">
           <div class="entry-content">
             <h1 id="hero-title" class="entry-name">
               {siteContent.name}
@@ -172,7 +169,7 @@ const petals = Array.from({ length: 26 }, (_, index) => ({
               id="scroll-to-overview"
               class="enter-button"
               type="button"
-              aria-label="View the profile and play background music"
+              aria-label="Reveal profile and featured work"
               data-testid="overview-button"
             >
               <span class="enter-star" aria-hidden="true">✦</span>
@@ -181,63 +178,8 @@ const petals = Array.from({ length: 26 }, (_, index) => ({
           </div>
         </div>
 
-        <div class="entry-preview" aria-hidden="true">
-          <span class="preview-label">
-            <span class="lang-copy lang-copy--en">Preview</span>
-            <span class="lang-copy lang-copy--zh">预览</span>
-          </span>
-          <div class="preview-cards">
-            {previewCards.map((preview) => (
-              <div class="preview-card" style={`--preview-position:${preview.imagePosition}`}>
-                <span class="preview-card__sky">
-                  <Image src={heroBackground} width={320} height={180} alt="" loading="lazy" quality={56} />
-                </span>
-                <strong>
-                  <span class="lang-copy lang-copy--en">{preview.title.en}</span>
-                  <span class="lang-copy lang-copy--zh">{preview.title.zhCN}</span>
-                </strong>
-                <small>
-                  <span class="lang-copy lang-copy--en">{preview.subtitle.en}</span>
-                  <span class="lang-copy lang-copy--zh">{preview.subtitle.zhCN}</span>
-                </small>
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <section id="overview" class="overview-hero" aria-labelledby="overview-title" data-nav-section="home">
-      <div class="overview-media" aria-hidden="true">
-        <Picture
-          src={heroBackground}
-          formats={['avif', 'webp']}
-          widths={[640, 960, 1280, 1672]}
-          sizes="100vw"
-          layout="full-width"
-          quality={80}
-          alt=""
-          loading="lazy"
-          class="overview-image"
-        />
-      </div>
-      <div class="overview-vignette" aria-hidden="true"></div>
-      <div class="overview-copy" data-reveal>
-        <h2 id="overview-title">{siteContent.name}<span>✦</span></h2>
-        <p>
-          <span class="lang-copy lang-copy--en">{siteContent.tagline.en}</span>
-          <span class="lang-copy lang-copy--zh">{siteContent.tagline.zhCN}</span>
-        </p>
-        <div class="star-divider"><i></i><span>✦</span><i></i></div>
-        <a class="scroll-cue" href="#overview-deck">
-          <span class="scroll-mouse" aria-hidden="true"><i></i></span>
-          <span class="lang-copy lang-copy--en">Scroll</span>
-          <span class="lang-copy lang-copy--zh">向下</span>
-          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m5 9 7 7 7-7" /></svg>
-        </a>
-      </div>
-
-      <section id="overview-deck" class="constellation-deck" aria-label="Featured preview" data-reveal>
+        <span id="overview" class="overview-anchor" aria-hidden="true"></span>
+        <section id="overview-deck" class="hero-deck-motion constellation-deck" aria-label="Featured work">
         <article class="profile-card deck-card">
           <div class="avatar-shell">
             <Image
@@ -290,7 +232,8 @@ const petals = Array.from({ length: 26 }, (_, index) => ({
             </div>
           </article>
         ))}
-      </section>
+        </section>
+      </div>
     </section>
 
     <div class="content-stage">
