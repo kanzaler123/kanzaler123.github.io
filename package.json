@@ -1,0 +1,32 @@
+{
+  "name": "kanzaler-starfield",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "astro dev",
+    "start": "astro dev",
+    "sync:github": "node scripts/sync-github.mjs",
+    "prepare:music": "node scripts/prepare-media.mjs",
+    "check": "astro check",
+    "build": "astro build",
+    "build:ci": "npm run sync:github && npm run check && astro build",
+    "preview": "astro preview",
+    "test": "playwright test"
+  },
+  "dependencies": {
+    "@astrojs/mdx": "^7.0.3",
+    "@fontsource-variable/cormorant-garamond": "^5.3.0",
+    "@fontsource-variable/ysabeau": "^5.3.0",
+    "@fontsource/zcool-xiaowei": "^5.3.0",
+    "astro": "^7.1.1",
+    "sharp": "^0.35.3"
+  },
+  "devDependencies": {
+    "@astrojs/check": "^0.9.9",
+    "@playwright/test": "^1.61.1",
+    "@types/node": "^26.1.1",
+    "ffmpeg-static": "^5.3.0",
+    "typescript": "^6.0.3"
+  }
+}

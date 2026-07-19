@@ -1,0 +1,357 @@
+---
+import { getCollection } from 'astro:content';
+import { Image, Picture } from 'astro:assets';
+import BaseLayout from '../layouts/BaseLayout.astro';
+import heroBackground from '../assets/hero-background.png';
+import { siteContent } from '../content/site';
+import snapshotData from '../data/github-snapshot.json';
+import type { GitHubSnapshot } from '../types/github';
+
+const githubSnapshot = snapshotData as GitHubSnapshot;
+const publishedNotes = (await getCollection('notes')).filter((note) => !note.data.draft);
+const repoByName = new Map(githubSnapshot.repositories.map((repo) => [repo.name, repo]));
+const projects = siteContent.featuredProjects.map((project) => ({
+  ...project,
+  github: project.repo ? repoByName.get(project.repo) : undefined,
+}));
+const repoCount = githubSnapshot.repositories.length;
+const petals = Array.from({ length: 14 });
+---
+
+<BaseLayout
+  title="Kanzaler — AI, learning, and imagination"
+  description="A personal space for AI, learning, and imagination."
+>
+  <a class="skip-link" href="#projects">
+    <span class="lang-copy lang-copy--en">Skip to content</span>
+    <span class="lang-copy lang-copy--zh">跳到正文</span>
+  </a>
+
+  <canvas id="star-field" class="star-field" aria-hidden="true"></canvas>
+  <div id="meteor-layer" class="meteor-layer" aria-hidden="true"></div>
+  <div class="petal-layer" aria-hidden="true">
+    {petals.map((_, index) => <i style={`--petal-index:${index}`}></i>)}
+  </div>
+
+  <header class="site-header" data-header>
+    <a class="brand" href="#home" aria-label="Kanzaler home">
+      <span>Kanzaler</span>
+      <svg viewBox="0 0 32 32" aria-hidden="true">
+        <path d="M25.8 3.8C18.2 5.5 11.5 11.7 9 19.6c-1.1 3.3-1.2 6.5-1 8.6l2.5-5.4c2.7.8 5.9-.3 8.1-2.6-2.1.4-3.9.3-5.2-.2 3.2-.6 6.2-2.4 8.1-5-1.7.5-3.3.7-4.7.5 3-.9 5.6-3 7.1-5.7-1.3.5-2.5.8-3.7.8 2.5-1.2 4.5-3.4 5.6-6.8Z" />
+      </svg>
+    </a>
+
+    <button
+      class="menu-toggle"
+      type="button"
+      aria-expanded="false"
+      aria-controls="primary-navigation"
+      aria-label="Open navigation"
+      data-testid="menu-toggle"
+    >
+      <span></span><span></span>
+    </button>
+
+    <nav id="primary-navigation" class="primary-navigation" aria-label="Primary navigation">
+      {siteContent.navigation.map((item, index) => (
+        <a href={`#${item.id}`} class:list={{ active: index === 0 }} data-nav-link={item.id}>
+          <span class="lang-copy lang-copy--en">{item.label.en}</span>
+          <span class="lang-copy lang-copy--zh">{item.label.zhCN}</span>
+        </a>
+      ))}
+    </nav>
+
+    <div class="header-tools">
+      <button
+        id="locale-toggle"
+        class="locale-toggle"
+        type="button"
+        aria-label="Switch to Chinese"
+        data-testid="locale-toggle"
+      >
+        <span class="locale-current">EN</span>
+        <span class="locale-divider"></span>
+        <span class="locale-next">中</span>
+      </button>
+
+      <div class="music-control">
+        <button
+          id="music-toggle"
+          class="music-toggle"
+          type="button"
+          aria-label="Play background music"
+          aria-pressed="false"
+          data-state="paused"
+          data-testid="music-toggle"
+        >
+          <svg class="music-icon music-icon--sound" viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M4 9.5v5h3.7l4.3 3.6V5.9L7.7 9.5H4Z" />
+            <path class="sound-wave" d="M15 8.4c1.7 2 1.7 5.2 0 7.2M18 6c3.1 3.4 3.1 8.6 0 12" />
+          </svg>
+          <span class="music-bars" aria-hidden="true"><i></i><i></i><i></i></span>
+        </button>
+        <div class="volume-panel">
+          <label for="music-volume">
+            <span class="lang-copy lang-copy--en">Volume</span>
+            <span class="lang-copy lang-copy--zh">音量</span>
+          </label>
+          <input id="music-volume" type="range" min="0" max="100" value="25" />
+          <span id="music-status" class="sr-only" aria-live="polite">Music paused</span>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <section id="home" class="hero" aria-labelledby="hero-title">
+      <div class="hero-media" aria-hidden="true">
+        <Picture
+          src={heroBackground}
+          formats={['avif', 'webp']}
+          widths={[640, 960, 1280, 1672]}
+          sizes="100vw"
+          layout="full-width"
+          quality={82}
+          alt=""
+          loading="eager"
+          fetchpriority="high"
+          class="hero-image"
+        />
+      </div>
+      <div class="hero-vignette" aria-hidden="true"></div>
+      <div class="hero-haze" aria-hidden="true"></div>
+
+      <div class="entry-panel" data-entry-panel>
+        <div class="entry-orb-wrap">
+          <div class="entry-orb" aria-hidden="true">
+            <i class="orb-ring orb-ring--outer"></i>
+            <i class="orb-ring orb-ring--middle"></i>
+            <i class="orb-ring orb-ring--inner"></i>
+          </div>
+          <div class="entry-content">
+            <p class="entry-eyebrow">
+              <span class="lang-copy lang-copy--en">{siteContent.eyebrow.en}</span>
+              <span class="lang-copy lang-copy--zh">{siteContent.eyebrow.zhCN}</span>
+            </p>
+            <p class="entry-name">
+              {siteContent.name}
+              <span class="feather-mark" aria-hidden="true">
+                <svg viewBox="0 0 32 32">
+                  <path d="M25.8 3.8C18.2 5.5 11.5 11.7 9 19.6c-1.1 3.3-1.2 6.5-1 8.6l2.5-5.4c2.7.8 5.9-.3 8.1-2.6-2.1.4-3.9.3-5.2-.2 3.2-.6 6.2-2.4 8.1-5-1.7.5-3.3.7-4.7.5 3-.9 5.6-3 7.1-5.7-1.3.5-2.5.8-3.7.8 2.5-1.2 4.5-3.4 5.6-6.8Z" />
+                </svg>
+              </span>
+            </p>
+            <div class="star-divider"><i></i><span>✦</span><i></i></div>
+            <p class="entry-tagline">
+              <span class="lang-copy lang-copy--en">{siteContent.tagline.en}</span>
+              <span class="lang-copy lang-copy--zh">{siteContent.tagline.zhCN}</span>
+            </p>
+            <button id="enter-site" class="enter-button" type="button" aria-label="Enter the site and play music">
+              <span class="enter-star" aria-hidden="true">✦</span>
+              <span class="enter-label">
+                <span class="lang-copy lang-copy--en">Click to Enter</span>
+                <span class="lang-copy lang-copy--zh">点击进入</span>
+              </span>
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m5 9 7 7 7-7" /></svg>
+            </button>
+          </div>
+        </div>
+
+        <div class="entry-preview" aria-hidden="true">
+          <span class="preview-label">Preview</span>
+          <div class="preview-cards">
+            {projects.map((project) => (
+              <div class="preview-card">
+                <span class="preview-card__sky"></span>
+                <strong>{project.title.en}</strong>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      <div class="hero-copy">
+        <p class="hero-eyebrow">
+          <span class="lang-copy lang-copy--en">{siteContent.eyebrow.en}</span>
+          <span class="lang-copy lang-copy--zh">{siteContent.eyebrow.zhCN}</span>
+        </p>
+        <h1 id="hero-title">{siteContent.name}<span>✦</span></h1>
+        <p>
+          <span class="lang-copy lang-copy--en">{siteContent.tagline.en}</span>
+          <span class="lang-copy lang-copy--zh">{siteContent.tagline.zhCN}</span>
+        </p>
+        <div class="star-divider"><i></i><span>✦</span><i></i></div>
+        <a class="scroll-cue" href="#projects">
+          <span class="scroll-mouse" aria-hidden="true"><i></i></span>
+          <span class="lang-copy lang-copy--en">Scroll</span>
+          <span class="lang-copy lang-copy--zh">向下</span>
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m5 9 7 7 7-7" /></svg>
+        </a>
+      </div>
+    </section>
+
+    <div class="content-stage">
+      <section class="constellation-deck" aria-label="Featured preview" data-reveal>
+        <article class="profile-card deck-card">
+          <div class="avatar-shell">
+            <Image src={heroBackground} width={180} height={180} alt="" loading="lazy" />
+            <span aria-hidden="true">✦</span>
+          </div>
+          <h2>{siteContent.name}</h2>
+          <p>
+            <span class="lang-copy lang-copy--en">{siteContent.about.en}</span>
+            <span class="lang-copy lang-copy--zh">{siteContent.about.zhCN}</span>
+          </p>
+          <a href={siteContent.socialLinks[0].href} target="_blank" rel="noreferrer" class="social-link" aria-label="Kanzaler on GitHub">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2a10 10 0 0 0-3.16 19.49c.5.09.68-.22.68-.48v-1.87c-2.78.6-3.37-1.18-3.37-1.18-.45-1.16-1.11-1.47-1.11-1.47-.91-.62.07-.61.07-.61 1 .07 1.53 1.03 1.53 1.03.9 1.53 2.35 1.09 2.92.83.09-.65.35-1.09.64-1.34-2.22-.25-4.55-1.11-4.55-4.94 0-1.09.39-1.98 1.03-2.68-.1-.25-.45-1.27.1-2.64 0 0 .84-.27 2.75 1.02A9.56 9.56 0 0 1 12 6.82a9.5 9.5 0 0 1 2.5.34c1.9-1.29 2.74-1.02 2.74-1.02.55 1.37.2 2.39.1 2.64.64.7 1.03 1.59 1.03 2.68 0 3.84-2.34 4.68-4.57 4.93.36.31.68.92.68 1.86v2.76c0 .27.18.58.69.48A10 10 0 0 0 12 2Z" /></svg>
+          </a>
+        </article>
+
+        {projects.map((project, index) => (
+          <article
+            class="feature-card deck-card"
+            data-placeholder={String(project.placeholder)}
+            style={`--card-index:${index}; --card-image-position:${project.imagePosition}`}
+          >
+            <div class="feature-card__image">
+              <Image src={heroBackground} width={640} height={360} alt="" loading="lazy" quality={68} />
+              <span class="coming-badge">
+                <span class="lang-copy lang-copy--en">Coming Soon</span>
+                <span class="lang-copy lang-copy--zh">即将呈现</span>
+              </span>
+            </div>
+            <div class="feature-card__body">
+              <p class="card-kicker">
+                <span class="lang-copy lang-copy--en">{project.category.en}</span>
+                <span class="lang-copy lang-copy--zh">{project.category.zhCN}</span>
+              </p>
+              <h3>
+                <span class="lang-copy lang-copy--en">{project.title.en}</span>
+                <span class="lang-copy lang-copy--zh">{project.title.zhCN}</span>
+              </h3>
+              <p>
+                <span class="lang-copy lang-copy--en">{project.summary.en}</span>
+                <span class="lang-copy lang-copy--zh">{project.summary.zhCN}</span>
+              </p>
+              <span class="card-spark" aria-hidden="true">✦</span>
+            </div>
+          </article>
+        ))}
+      </section>
+
+      <section id="projects" class="content-section projects-section" aria-labelledby="projects-title">
+        <div class="section-heading" data-reveal>
+          <p class="section-index">01 — Orbit</p>
+          <h2 id="projects-title">
+            <span class="lang-copy lang-copy--en">Projects in orbit</span>
+            <span class="lang-copy lang-copy--zh">轨道中的项目</span>
+          </h2>
+          <p>
+            <span class="lang-copy lang-copy--en">A curated constellation of things being built. The first stories are still taking shape.</span>
+            <span class="lang-copy lang-copy--zh">一组精心整理、正在构建的想法。最初的故事仍在成形。</span>
+          </p>
+        </div>
+        <div class="orbit-panel" data-reveal>
+          <div class="orbit-graphic" aria-hidden="true">
+            <i class="orbit orbit--one"></i><i class="orbit orbit--two"></i><i class="orbit orbit--three"></i>
+            <span class="orbit-core">✦</span>
+          </div>
+          <div class="orbit-copy">
+            <p class="live-label"><i></i> GitHub snapshot</p>
+            <strong>{repoCount}</strong>
+            <span>
+              <span class="lang-copy lang-copy--en">public repositories synchronized at build time</span>
+              <span class="lang-copy lang-copy--zh">个公开仓库已在构建阶段同步</span>
+            </span>
+            <a href="https://github.com/kanzaler123?tab=repositories" target="_blank" rel="noreferrer">
+              <span class="lang-copy lang-copy--en">Explore on GitHub</span>
+              <span class="lang-copy lang-copy--zh">前往 GitHub 探索</span>
+              <span aria-hidden="true">↗</span>
+            </a>
+          </div>
+        </div>
+      </section>
+
+      <section id="notes" class="content-section notes-section" aria-labelledby="notes-title">
+        <div class="section-heading" data-reveal>
+          <p class="section-index">02 — Fragments</p>
+          <h2 id="notes-title">
+            <span class="lang-copy lang-copy--en">Notes after midnight</span>
+            <span class="lang-copy lang-copy--zh">午夜之后的笔记</span>
+          </h2>
+        </div>
+        {publishedNotes.length === 0 ? (
+          <div class="empty-notes" data-reveal>
+            <span class="empty-notes__moon" aria-hidden="true"></span>
+            <div>
+              <p>
+                <span class="lang-copy lang-copy--en">The page is open. The first line has not arrived yet.</span>
+                <span class="lang-copy lang-copy--zh">页面已经翻开，第一行文字尚未抵达。</span>
+              </p>
+              <small>
+                <span class="lang-copy lang-copy--en">Notes will appear here when they are ready.</span>
+                <span class="lang-copy lang-copy--zh">准备好之后，笔记会出现在这里。</span>
+              </small>
+            </div>
+          </div>
+        ) : (
+          <div class="note-grid">
+            {publishedNotes.map((note) => (
+              <article class="note-card" data-reveal>
+                <time datetime={note.data.publishedAt.toISOString()}>{note.data.publishedAt.toLocaleDateString('en-US')}</time>
+                <h3>
+                  <span class="lang-copy lang-copy--en">{note.data.title.en}</span>
+                  <span class="lang-copy lang-copy--zh">{note.data.title.zhCN}</span>
+                </h3>
+                <p>
+                  <span class="lang-copy lang-copy--en">{note.data.summary.en}</span>
+                  <span class="lang-copy lang-copy--zh">{note.data.summary.zhCN}</span>
+                </p>
+              </article>
+            ))}
+          </div>
+        )}
+      </section>
+
+      <section id="about" class="content-section about-section" aria-labelledby="about-title">
+        <div class="about-portrait" data-reveal aria-hidden="true">
+          <Image src={heroBackground} width={760} height={760} alt="" loading="lazy" quality={72} />
+          <span class="portrait-orbit"></span>
+        </div>
+        <div class="about-copy" data-reveal>
+          <p class="section-index">03 — About</p>
+          <h2 id="about-title">
+            <span class="lang-copy lang-copy--en">Learning under the same sky.</span>
+            <span class="lang-copy lang-copy--zh">在同一片星空下学习。</span>
+          </h2>
+          <p>
+            <span class="lang-copy lang-copy--en">{siteContent.about.en}</span>
+            <span class="lang-copy lang-copy--zh">{siteContent.about.zhCN}</span>
+          </p>
+          <ul class="interest-list" aria-label="Interests">
+            <li>AI</li><li>Learning</li><li>Imagination</li>
+          </ul>
+          <a class="github-cta" href="https://github.com/kanzaler123" target="_blank" rel="noreferrer">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2a10 10 0 0 0-3.16 19.49c.5.09.68-.22.68-.48v-1.87c-2.78.6-3.37-1.18-3.37-1.18-.45-1.16-1.11-1.47-1.11-1.47-.91-.62.07-.61.07-.61 1 .07 1.53 1.03 1.53 1.03.9 1.53 2.35 1.09 2.92.83.09-.65.35-1.09.64-1.34-2.22-.25-4.55-1.11-4.55-4.94 0-1.09.39-1.98 1.03-2.68-.1-.25-.45-1.27.1-2.64 0 0 .84-.27 2.75 1.02A9.56 9.56 0 0 1 12 6.82a9.5 9.5 0 0 1 2.5.34c1.9-1.29 2.74-1.02 2.74-1.02.55 1.37.2 2.39.1 2.64.64.7 1.03 1.59 1.03 2.68 0 3.84-2.34 4.68-4.57 4.93.36.31.68.92.68 1.86v2.76c0 .27.18.58.69.48A10 10 0 0 0 12 2Z" /></svg>
+            <span>@kanzaler123</span><span aria-hidden="true">↗</span>
+          </a>
+        </div>
+      </section>
+
+      <footer class="site-footer">
+        <span>Kanzaler ✦</span>
+        <p>
+          <span class="lang-copy lang-copy--en">Made beneath a quiet digital sky.</span>
+          <span class="lang-copy lang-copy--zh">写在一片安静的数字星空之下。</span>
+        </p>
+        <a href="#home" aria-label="Back to top">↑</a>
+      </footer>
+    </div>
+  </main>
+
+  <audio id="background-music" src={siteContent.music.src} preload="metadata" loop></audio>
+
+  <script>
+    import '../scripts/site';
+  </script>
+</BaseLayout>
