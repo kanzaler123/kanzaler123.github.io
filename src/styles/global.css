@@ -404,7 +404,7 @@ html[data-locale='zh-CN'] .lang-copy--en {
 .hero-sequence {
   --audio-brightness: 1;
   --audio-glow: 88px;
-  --audio-scale: 1;
+  --wave-opacity: 0.48;
   --button-opacity: 1;
   --button-scale: 1;
   --button-y: 0px;
@@ -518,12 +518,11 @@ html[data-locale='zh-CN'] .lang-copy--en {
     inset 0 0 var(--audio-glow) rgba(109, 92, 248, 0.2),
     0 0 var(--audio-glow) rgba(74, 79, 214, 0.27);
   filter: brightness(var(--audio-brightness));
-  scale: var(--audio-scale);
-  transition: scale 90ms linear, filter 90ms linear, box-shadow 90ms linear;
+  transition: filter 90ms linear, box-shadow 90ms linear;
 }
 
 .hero-sequence[data-audio-active='true'] .entry-orb[data-audio-state='idle'] {
-  animation: orb-breathe 2.9s ease-in-out infinite;
+  animation: orb-glow 2.9s ease-in-out infinite;
 }
 
 .orb-ring {
@@ -535,19 +534,48 @@ html[data-locale='zh-CN'] .lang-copy--en {
   inset: 0;
   border-left-color: rgba(255, 255, 255, 0.9);
   border-top-width: 2px;
-  scale: var(--audio-scale);
 }
 
 .orb-ring--middle {
   inset: 8px;
   opacity: 0.44;
-  scale: calc(2 - var(--audio-scale));
 }
 
 .orb-ring--inner {
   inset: 18px;
   border-color: rgba(142, 130, 255, 0.22);
-  scale: var(--audio-scale);
+}
+
+.audio-wave-ring {
+  position: absolute;
+  z-index: 3;
+  inset: -3.5%;
+  width: 107%;
+  height: 107%;
+  overflow: visible;
+  pointer-events: none;
+  transform: rotate(-8deg);
+  filter: drop-shadow(0 0 5px rgba(193, 184, 255, 0.62)) drop-shadow(0 0 13px rgba(119, 105, 255, 0.3));
+}
+
+.audio-wave-ring__line,
+.audio-wave-ring__echo {
+  fill: none;
+  stroke: url('#audio-wave-gradient');
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  vector-effect: non-scaling-stroke;
+}
+
+.audio-wave-ring__line {
+  stroke-width: 1.25;
+  opacity: var(--wave-opacity);
+}
+
+.audio-wave-ring__echo {
+  stroke-width: 2.2;
+  opacity: 0.13;
+  filter: blur(1.4px);
 }
 
 .hero-copy-motion {
@@ -1269,9 +1297,9 @@ html[data-locale='zh-CN'] .lang-copy--en {
 .site-footer p { margin: 0; }
 .site-footer a { justify-self: end; font-size: 20px; }
 
-@keyframes orb-breathe {
-  0%, 100% { scale: 1; filter: brightness(0.96); }
-  50% { scale: 1.024; filter: brightness(1.08); }
+@keyframes orb-glow {
+  0%, 100% { filter: brightness(0.98); }
+  50% { filter: brightness(1.07); }
 }
 
 @keyframes meteor-flight {
@@ -1539,5 +1567,7 @@ html[data-locale='zh-CN'] .lang-copy--en {
   .petal-layer { display: none; }
   .hero-media { transform: none; }
   .entry-orb { transition: none; }
+  .audio-wave-ring__echo { display: none; }
+  .audio-wave-ring__line { opacity: 0.38; }
   [data-reveal] { opacity: 1; transform: none; }
 }

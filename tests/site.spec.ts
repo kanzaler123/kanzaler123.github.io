@@ -194,7 +194,7 @@ test('attempts audible autoplay immediately at the saved volume', async ({ page 
   await expect.poll(() => page.locator('#background-music').evaluate((audio) => (audio as HTMLAudioElement).volume)).toBeCloseTo(0.25, 2);
 });
 
-test('low frequencies drive the orb through a single media-element source', async ({ page }) => {
+test('low frequencies drive a smooth ring waveform through a single media-element source', async ({ page }) => {
   await page.emulateMedia({ reducedMotion: 'no-preference' });
   await mockMediaPlayback(page);
   await mockLowFrequencyAudioContext(page);
@@ -202,15 +202,19 @@ test('low frequencies drive the orb through a single media-element source', asyn
 
   await expect(page.getByTestId('music-toggle')).toHaveAttribute('data-state', 'playing');
   await expect(page.locator('.entry-orb')).toHaveAttribute('data-audio-state', 'active');
-  await expect.poll(() => page.locator('[data-hero-sequence]').evaluate((sequence) => (
-    Number.parseFloat(getComputedStyle(sequence).getPropertyValue('--audio-scale'))
-  ))).toBeGreaterThan(1);
+  await expect(page.locator('[data-audio-wave-line]')).toHaveAttribute('d', /Q/);
+  await expect.poll(() => page.locator('[data-audio-wave-line]').evaluate((wave) => (
+    Number.parseFloat(wave.getAttribute('data-wave-deviation') ?? '0')
+  ))).toBeGreaterThan(0.5);
   await expect.poll(() => page.evaluate(() => (
     (window as typeof window & { __fakeAudioState: { mediaSourceCreates: number } }).__fakeAudioState.mediaSourceCreates
   ))).toBe(1);
 
   await page.getByTestId('music-toggle').click();
   await expect(page.getByTestId('music-toggle')).toHaveAttribute('data-state', 'paused');
+  await expect.poll(() => page.locator('[data-audio-wave-line]').evaluate((wave) => (
+    Number.parseFloat(wave.getAttribute('data-wave-deviation') ?? '0')
+  )), { timeout: 3000 }).toBeLessThan(0.08);
   await page.getByTestId('music-toggle').click();
   await expect(page.getByTestId('music-toggle')).toHaveAttribute('data-state', 'playing');
   await expect.poll(() => page.evaluate(() => (

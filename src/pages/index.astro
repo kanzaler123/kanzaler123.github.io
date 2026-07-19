@@ -147,6 +147,18 @@ const petals = Array.from({ length: 26 }, (_, index) => ({
             <i class="orb-ring orb-ring--outer"></i>
             <i class="orb-ring orb-ring--middle"></i>
             <i class="orb-ring orb-ring--inner"></i>
+            <svg class="audio-wave-ring" viewBox="0 0 240 240" focusable="false">
+              <defs>
+                <linearGradient id="audio-wave-gradient" x1="28" y1="24" x2="212" y2="216" gradientUnits="userSpaceOnUse">
+                  <stop offset="0" stop-color="#ffffff" />
+                  <stop offset="0.42" stop-color="#bfc7ff" />
+                  <stop offset="0.72" stop-color="#9f8cff" />
+                  <stop offset="1" stop-color="#f3c8ff" />
+                </linearGradient>
+              </defs>
+              <path class="audio-wave-ring__echo" data-audio-wave-echo></path>
+              <path class="audio-wave-ring__line" data-audio-wave-line data-wave-deviation="0"></path>
+            </svg>
           </div>
         </div>
 

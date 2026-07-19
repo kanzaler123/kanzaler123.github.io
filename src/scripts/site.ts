@@ -4,6 +4,8 @@ const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
 const heroSequence = document.querySelector<HTMLElement>('[data-hero-sequence]');
 const heroSticky = document.querySelector<HTMLElement>('[data-hero-sticky]');
 const entryOrb = document.querySelector<HTMLElement>('.entry-orb');
+const audioWaveLine = document.querySelector<SVGPathElement>('[data-audio-wave-line]');
+const audioWaveEcho = document.querySelector<SVGPathElement>('[data-audio-wave-echo]');
 let heroProgress = 0;
 
 const storage = {
@@ -94,6 +96,13 @@ let graphPromise: Promise<boolean> | null = null;
 let analyserUnlockListening = false;
 let audioVisualFrame = 0;
 let bassEnvelope = 0;
+const wavePointCount = 96;
+const waveCenter = 120;
+const waveRadius = 107;
+const waveOffsets = new Float32Array(wavePointCount);
+const waveTargets = new Float32Array(wavePointCount);
+const spectrumBands = new Float32Array(wavePointCount / 2);
+let wavePhase = 0;
 
 if (audio) {
   audio.volume = muted ? 0 : volume;
@@ -104,10 +113,73 @@ if (musicVolume) musicVolume.value = String(Math.round(volume * 100));
 function setAudioCss(level = 0) {
   if (!heroSequence) return;
   const safeLevel = Math.max(0, Math.min(1, Number.isFinite(level) ? level : 0));
-  heroSequence.style.setProperty('--audio-scale', (1 + safeLevel * 0.052).toFixed(4));
   heroSequence.style.setProperty('--audio-glow', `${(88 + safeLevel * 76).toFixed(1)}px`);
   heroSequence.style.setProperty('--audio-brightness', (1 + safeLevel * 0.2).toFixed(3));
+  heroSequence.style.setProperty('--wave-opacity', (0.48 + safeLevel * 0.4).toFixed(3));
 }
+
+function makeSmoothClosedPath(offsets: Float32Array, multiplier = 1) {
+  const points = Array.from({ length: wavePointCount }, (_, index) => {
+    const angle = (index / wavePointCount) * Math.PI * 2 - Math.PI / 2;
+    const radius = waveRadius + offsets[index] * multiplier;
+    return {
+      x: waveCenter + Math.cos(angle) * radius,
+      y: waveCenter + Math.sin(angle) * radius,
+    };
+  });
+  const midpoint = (a: { x: number; y: number }, b: { x: number; y: number }) => ({
+    x: (a.x + b.x) / 2,
+    y: (a.y + b.y) / 2,
+  });
+  const start = midpoint(points[wavePointCount - 1], points[0]);
+  let path = `M ${start.x.toFixed(2)} ${start.y.toFixed(2)}`;
+  for (let index = 0; index < wavePointCount; index += 1) {
+    const point = points[index];
+    const next = points[(index + 1) % wavePointCount];
+    const end = midpoint(point, next);
+    path += ` Q ${point.x.toFixed(2)} ${point.y.toFixed(2)} ${end.x.toFixed(2)} ${end.y.toFixed(2)}`;
+  }
+  return `${path} Z`;
+}
+
+function drawAudioWave() {
+  let deviation = 0;
+  waveOffsets.forEach((offset) => { deviation = Math.max(deviation, Math.abs(offset)); });
+  const basePath = makeSmoothClosedPath(waveOffsets);
+  audioWaveLine?.setAttribute('d', basePath);
+  audioWaveLine?.setAttribute('data-wave-deviation', deviation.toFixed(3));
+  audioWaveEcho?.setAttribute('d', makeSmoothClosedPath(waveOffsets, 1.22));
+}
+
+function frequencyEnergy(minHz: number, maxHz: number, binWidth: number) {
+  if (!analyserBins) return 0;
+  const first = Math.max(1, Math.ceil(minHz / binWidth));
+  const last = Math.min(analyserBins.length - 1, Math.max(first, Math.floor(maxHz / binWidth)));
+  let energy = 0;
+  let count = 0;
+  for (let index = first; index <= last; index += 1) {
+    const normalized = analyserBins[index] / 255;
+    energy += normalized * normalized;
+    count += 1;
+  }
+  return count ? Math.sqrt(energy / count) : 0;
+}
+
+function settleAudioWave() {
+  let remaining = 0;
+  for (let index = 0; index < wavePointCount; index += 1) {
+    waveOffsets[index] *= 0.82;
+    if (Math.abs(waveOffsets[index]) < 0.015) waveOffsets[index] = 0;
+    remaining = Math.max(remaining, Math.abs(waveOffsets[index]));
+  }
+  bassEnvelope *= 0.82;
+  if (bassEnvelope < 0.005) bassEnvelope = 0;
+  setAudioCss(bassEnvelope);
+  drawAudioWave();
+  return remaining;
+}
+
+drawAudioWave();
 
 function canSampleAudio() {
   return Boolean(
@@ -126,26 +198,51 @@ function canSampleAudio() {
 function sampleAudio() {
   audioVisualFrame = 0;
   if (!canSampleAudio() || !analyser || !analyserBins || !audioContext) {
-    bassEnvelope *= 0.72;
-    setAudioCss(bassEnvelope);
+    const remaining = settleAudioWave();
+    if (remaining > 0 || bassEnvelope > 0) audioVisualFrame = requestAnimationFrame(sampleAudio);
     return;
   }
 
   analyser.getByteFrequencyData(analyserBins);
   const binWidth = audioContext.sampleRate / analyser.fftSize;
-  const firstBin = Math.max(1, Math.ceil(45 / binWidth));
-  const lastBin = Math.min(analyserBins.length - 1, Math.floor(220 / binWidth));
-  let energy = 0;
-  let count = 0;
-  for (let index = firstBin; index <= lastBin; index += 1) {
-    const normalized = analyserBins[index] / 255;
-    energy += normalized * normalized;
-    count += 1;
+  const bass = frequencyEnergy(45, 220, binWidth);
+  const mids = frequencyEnergy(220, 1800, binWidth);
+  const highs = frequencyEnergy(1800, 6200, binWidth);
+  const bassTarget = Math.max(0, Math.min(1, (bass - 0.045) / 0.52));
+  bassEnvelope += (bassTarget - bassEnvelope) * (bassTarget > bassEnvelope ? 0.28 : 0.075);
+
+  for (let band = 0; band < spectrumBands.length; band += 1) {
+    const ratio = band / Math.max(1, spectrumBands.length - 1);
+    const centerHz = 60 * Math.pow(6200 / 60, ratio);
+    const raw = frequencyEnergy(centerHz * 0.82, centerHz * 1.2, binWidth);
+    const left = spectrumBands[Math.max(0, band - 1)] || raw;
+    spectrumBands[band] += (((raw * 0.66) + (left * 0.34)) - spectrumBands[band]) * 0.22;
   }
-  const rms = count > 0 ? Math.sqrt(energy / count) : 0;
-  const target = Math.max(0, Math.min(1, (rms - 0.055) / 0.46));
-  bassEnvelope += (target - bassEnvelope) * (target > bassEnvelope ? 0.28 : 0.07);
+
+  const bandMean = spectrumBands.reduce((sum, band) => sum + band, 0) / spectrumBands.length;
+  wavePhase += 0.018 + bassEnvelope * 0.012;
+  for (let index = 0; index < wavePointCount; index += 1) {
+    const mirroredIndex = index < spectrumBands.length ? index : wavePointCount - index - 1;
+    const band = spectrumBands[Math.max(0, Math.min(spectrumBands.length - 1, mirroredIndex))];
+    const angle = (index / wavePointCount) * Math.PI * 2;
+    const lowWave = Math.sin(angle * 3 + wavePhase) * bassEnvelope * 4.8;
+    const secondaryWave = Math.sin(angle * 7 - wavePhase * 0.72) * (bassEnvelope * 1.9 + mids * 1.25);
+    const fineWave = Math.sin(angle * 11 + wavePhase * 1.18) * highs * 0.75;
+    const spectralWave = (band - bandMean * 0.72) * 4.4;
+    waveTargets[index] = Math.max(-7.5, Math.min(8.5, lowWave + secondaryWave + fineWave + spectralWave));
+  }
+
+  for (let index = 0; index < wavePointCount; index += 1) {
+    const previous = waveTargets[(index - 1 + wavePointCount) % wavePointCount];
+    const current = waveTargets[index];
+    const next = waveTargets[(index + 1) % wavePointCount];
+    const spatiallySmoothed = previous * 0.24 + current * 0.52 + next * 0.24;
+    const response = Math.abs(spatiallySmoothed) > Math.abs(waveOffsets[index]) ? 0.24 : 0.095;
+    waveOffsets[index] += (spatiallySmoothed - waveOffsets[index]) * response;
+  }
+
   setAudioCss(bassEnvelope);
+  drawAudioWave();
   audioVisualFrame = requestAnimationFrame(sampleAudio);
 }
 
@@ -154,10 +251,7 @@ function syncAudioVisualization() {
     if (!audioVisualFrame) audioVisualFrame = requestAnimationFrame(sampleAudio);
     return;
   }
-  cancelAnimationFrame(audioVisualFrame);
-  audioVisualFrame = 0;
-  bassEnvelope = 0;
-  setAudioCss(0);
+  if (!audioVisualFrame) audioVisualFrame = requestAnimationFrame(sampleAudio);
 }
 
 function removeAnalyserUnlock() {
