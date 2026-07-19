@@ -179,6 +179,15 @@ function settleAudioWave() {
   return remaining;
 }
 
+function resetAudioWave() {
+  waveOffsets.fill(0);
+  waveTargets.fill(0);
+  spectrumBands.fill(0);
+  bassEnvelope = 0;
+  setAudioCss(0);
+  drawAudioWave();
+}
+
 drawAudioWave();
 
 function canSampleAudio() {
@@ -396,7 +405,8 @@ function removeAudioUnlock() {
   if (!unlockListening) return;
   unlockListening = false;
   document.removeEventListener('pointerdown', handleAudioUnlock, true);
-  document.removeEventListener('touchstart', handleAudioUnlock, true);
+  document.removeEventListener('pointerup', handleAudioUnlock, true);
+  document.removeEventListener('touchend', handleAudioUnlock, true);
   document.removeEventListener('keydown', handleAudioUnlock, true);
   document.removeEventListener('wheel', handleAudioUnlock, true);
 }
@@ -405,7 +415,8 @@ function installAudioUnlock() {
   if (unlockListening || !desiredPlaying || actuallyPlaying) return;
   unlockListening = true;
   document.addEventListener('pointerdown', handleAudioUnlock, true);
-  document.addEventListener('touchstart', handleAudioUnlock, true);
+  document.addEventListener('pointerup', handleAudioUnlock, true);
+  document.addEventListener('touchend', handleAudioUnlock, true);
   document.addEventListener('keydown', handleAudioUnlock, true);
   document.addEventListener('wheel', handleAudioUnlock, true);
 }
@@ -453,6 +464,11 @@ async function startAudio(): Promise<boolean> {
 
 async function handleAudioUnlock(event: Event) {
   if (!desiredPlaying || actuallyPlaying || unlockInFlight) return;
+  if (event instanceof PointerEvent) {
+    const isMouseDown = event.type === 'pointerdown' && event.pointerType === 'mouse';
+    const isNonMouseRelease = event.type === 'pointerup' && event.pointerType !== 'mouse';
+    if (!isMouseDown && !isNonMouseRelease) return;
+  }
   const target = event.target;
   if (target instanceof Element && target.closest('.music-control')) return;
   unlockInFlight = true;
@@ -470,6 +486,7 @@ function pauseAudio() {
   removeAudioUnlock();
   audio.pause();
   updateMusicUi('paused');
+  resetAudioWave();
   syncAudioVisualization();
 }
 

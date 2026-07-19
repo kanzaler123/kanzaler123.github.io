@@ -234,6 +234,20 @@ test('retries blocked autoplay on the first center-star gesture', async ({ page 
   await expect.poll(() => readHeroProgress(page)).toBeCloseTo(0.94, 1);
 });
 
+test('a downward touch gesture unlocks music without pressing the center star', async ({ page }) => {
+  await mockMediaPlayback(page, true);
+  await page.goto('/');
+  await expect(page.getByTestId('music-toggle')).toHaveAttribute('data-state', 'blocked');
+
+  await page.locator('body').dispatchEvent('touchend');
+
+  await expect(page.getByTestId('music-toggle')).toHaveAttribute('data-state', 'playing');
+  await expect.poll(() => page.evaluate(() => (
+    (window as typeof window & { __mediaPlayCalls: number }).__mediaPlayCalls
+  ))).toBe(2);
+  await expect.poll(() => readHeroProgress(page)).toBeCloseTo(0, 2);
+});
+
 test('uses the supplied account avatar instead of the hero background', async ({ page }) => {
   await page.goto('/');
   const avatar = page.getByTestId('profile-avatar');
