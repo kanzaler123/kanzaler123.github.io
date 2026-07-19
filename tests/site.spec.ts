@@ -170,6 +170,20 @@ test('the center star advances the sticky scene to 94% and scrolling up reverses
   await expect(page.getByTestId('audio-orb')).toBeInViewport();
 });
 
+test('navigation highlight returns to Home after scrolling back to the starry scene', async ({ page }) => {
+  await page.goto('/');
+  await page.evaluate(() => {
+    document.documentElement.style.scrollBehavior = 'auto';
+    const projects = document.querySelector<HTMLElement>('#projects')!;
+    scrollTo(0, projects.getBoundingClientRect().top + scrollY);
+  });
+  await expect(page.locator('[data-nav-link="projects"]')).toHaveClass(/active/);
+
+  await page.evaluate(() => scrollTo(0, 0));
+  await expect(page.locator('[data-nav-link="home"]')).toHaveClass(/active/);
+  await expect(page.locator('[data-nav-link="projects"]')).not.toHaveClass(/active/);
+});
+
 test('attempts audible autoplay immediately at the saved volume', async ({ page }) => {
   await mockMediaPlayback(page);
   await page.goto('/');

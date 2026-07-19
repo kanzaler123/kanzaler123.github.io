@@ -528,20 +528,27 @@ if (reduceMotion.matches || !('IntersectionObserver' in window)) {
 
 const sections = document.querySelectorAll<HTMLElement>('[data-nav-section], .content-stage > section[id]');
 const navLinks = document.querySelectorAll<HTMLAnchorElement>('[data-nav-link]');
-if ('IntersectionObserver' in window) {
-  const sectionObserver = new IntersectionObserver(
-    (entries) => {
-      const visible = entries
-        .filter((entry) => entry.isIntersecting)
-        .sort((a, b) => b.intersectionRatio - a.intersectionRatio)[0];
-      if (!visible) return;
-      const activeSection = (visible.target as HTMLElement).dataset.navSection ?? visible.target.id;
-      navLinks.forEach((link) => link.classList.toggle('active', link.dataset.navLink === activeSection));
-    },
-    { threshold: [0.2, 0.45, 0.7], rootMargin: '-18% 0px -55% 0px' },
-  );
-  sections.forEach((section) => sectionObserver.observe(section));
+let navigationFrame = 0;
+
+function syncActiveNavigation() {
+  navigationFrame = 0;
+  const readingLine = window.scrollY + window.innerHeight * 0.3;
+  let activeSection = 'home';
+  sections.forEach((section) => {
+    const sectionTop = section.getBoundingClientRect().top + window.scrollY;
+    if (sectionTop <= readingLine) activeSection = section.dataset.navSection ?? section.id;
+  });
+  navLinks.forEach((link) => link.classList.toggle('active', link.dataset.navLink === activeSection));
 }
+
+function scheduleActiveNavigation() {
+  if (!navigationFrame) navigationFrame = requestAnimationFrame(syncActiveNavigation);
+}
+
+syncActiveNavigation();
+window.addEventListener('scroll', scheduleActiveNavigation, { passive: true });
+window.addEventListener('resize', scheduleActiveNavigation, { passive: true });
+window.addEventListener('pageshow', scheduleActiveNavigation);
 
 const header = document.querySelector<HTMLElement>('[data-header]');
 window.addEventListener(
