@@ -5,10 +5,21 @@
     "avatarUrl": "https://avatars.githubusercontent.com/u/193775423?v=4",
     "htmlUrl": "https://github.com/kanzaler123",
     "bio": null,
-    "publicRepos": 42,
+    "publicRepos": 43,
     "followers": 0
   },
   "repositories": [
+    {
+      "name": "kanzaler123.github.io",
+      "htmlUrl": "https://github.com/kanzaler123/kanzaler123.github.io",
+      "description": "Kanzaler's animated bilingual starfield portfolio",
+      "language": "CSS",
+      "stars": 0,
+      "forks": 0,
+      "updatedAt": "2026-07-19T08:43:38Z",
+      "archived": false,
+      "fork": false
+    },
     {
       "name": "cc-haha",
       "htmlUrl": "https://github.com/kanzaler123/cc-haha",
@@ -472,5 +483,5 @@
       "fork": true
     }
   ],
-  "generatedAt": "2026-07-19T08:35:32.768Z"
+  "generatedAt": "2026-07-19T09:48:42.337Z"
 }

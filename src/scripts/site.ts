@@ -19,8 +19,6 @@ const storage = {
   },
 };
 
-body.classList.add('js-ready');
-
 // Language
 const localeToggle = document.querySelector<HTMLButtonElement>('#locale-toggle');
 const localeCurrent = localeToggle?.querySelector<HTMLElement>('.locale-current');
@@ -69,7 +67,11 @@ const audio = document.querySelector<HTMLAudioElement>('#background-music');
 const musicToggle = document.querySelector<HTMLButtonElement>('#music-toggle');
 const musicVolume = document.querySelector<HTMLInputElement>('#music-volume');
 const musicStatus = document.querySelector<HTMLElement>('#music-status');
-let desiredPlaying = false;
+let desiredPlaying = true;
+let actuallyPlaying = false;
+let playInFlight: Promise<boolean> | null = null;
+let unlockInFlight = false;
+let unlockListening = false;
 let fadeFrame = 0;
 let volume = Number.parseFloat(storage.get('kanzaler-music-volume') ?? '0.25');
 if (!Number.isFinite(volume)) volume = 0.25;
@@ -114,34 +116,86 @@ function fadeAudio(target: number, duration = 1100) {
   fadeFrame = requestAnimationFrame(tick);
 }
 
-async function startAudio() {
-  if (!audio) return;
+function removeAudioUnlock() {
+  if (!unlockListening) return;
+  unlockListening = false;
+  document.removeEventListener('pointerdown', handleAudioUnlock, true);
+  document.removeEventListener('touchstart', handleAudioUnlock, true);
+  document.removeEventListener('keydown', handleAudioUnlock, true);
+  document.removeEventListener('wheel', handleAudioUnlock, true);
+}
+
+function installAudioUnlock() {
+  if (unlockListening || !desiredPlaying || actuallyPlaying) return;
+  unlockListening = true;
+  document.addEventListener('pointerdown', handleAudioUnlock, true);
+  document.addEventListener('touchstart', handleAudioUnlock, true);
+  document.addEventListener('keydown', handleAudioUnlock, true);
+  document.addEventListener('wheel', handleAudioUnlock, true);
+}
+
+async function startAudio(): Promise<boolean> {
+  if (!audio) return false;
   desiredPlaying = true;
-  audio.muted = muted;
-  audio.volume = 0;
-  try {
-    await audio.play();
-    if (muted) {
-      updateMusicUi('muted');
-      return;
-    }
-    fadeAudio(volume);
-    updateMusicUi('playing');
-  } catch {
-    desiredPlaying = false;
-    updateMusicUi('blocked');
+
+  if (actuallyPlaying) {
+    audio.muted = muted;
+    if (!muted) fadeAudio(volume, 500);
+    updateMusicUi(muted ? 'muted' : 'playing');
+    removeAudioUnlock();
+    return true;
   }
+
+  if (playInFlight) return playInFlight;
+  audio.muted = muted;
+  audio.volume = muted || reduceMotion.matches ? (muted ? 0 : volume) : 0;
+
+  playInFlight = (async () => {
+    try {
+      await audio.play();
+      actuallyPlaying = true;
+      removeAudioUnlock();
+      if (muted) {
+        updateMusicUi('muted');
+        return true;
+      }
+      fadeAudio(volume);
+      updateMusicUi('playing');
+      return true;
+    } catch {
+      actuallyPlaying = false;
+      updateMusicUi('blocked');
+      installAudioUnlock();
+      return false;
+    } finally {
+      playInFlight = null;
+    }
+  })();
+
+  return playInFlight;
+}
+
+async function handleAudioUnlock(event: Event) {
+  if (!desiredPlaying || actuallyPlaying || unlockInFlight) return;
+  const target = event.target;
+  if (target instanceof Element && target.closest('.music-control')) return;
+  unlockInFlight = true;
+  const played = await startAudio();
+  unlockInFlight = false;
+  if (played) removeAudioUnlock();
 }
 
 function pauseAudio() {
   if (!audio) return;
   desiredPlaying = false;
+  actuallyPlaying = false;
+  removeAudioUnlock();
   audio.pause();
   updateMusicUi('paused');
 }
 
 musicToggle?.addEventListener('click', async () => {
-  if (desiredPlaying && !muted) {
+  if (actuallyPlaying && !muted) {
     pauseAudio();
     return;
   }
@@ -150,6 +204,11 @@ musicToggle?.addEventListener('click', async () => {
     muted = false;
     audio!.muted = false;
     storage.set('kanzaler-music-muted', 'false');
+    if (actuallyPlaying) {
+      fadeAudio(volume, 500);
+      updateMusicUi('playing');
+      return;
+    }
   }
   await startAudio();
 });
@@ -165,32 +224,37 @@ musicVolume?.addEventListener('input', async () => {
   audio.volume = volume;
   if (muted) {
     updateMusicUi('muted');
-  } else if (desiredPlaying) {
+  } else if (actuallyPlaying) {
     updateMusicUi('playing');
-  } else if (body.classList.contains('is-entered')) {
+  } else {
     await startAudio();
   }
 });
 
-audio?.addEventListener('ended', () => updateMusicUi('paused'));
+audio?.addEventListener('pause', () => {
+  actuallyPlaying = false;
+  if (!desiredPlaying) updateMusicUi('paused');
+});
+audio?.addEventListener('ended', () => {
+  actuallyPlaying = false;
+  updateMusicUi('paused');
+});
 updateMusicUi(muted ? 'muted' : 'paused');
 
-// Entrance choreography
-const enterButton = document.querySelector<HTMLButtonElement>('#enter-site');
-const contentStage = document.querySelector<HTMLElement>('.content-stage');
-if (contentStage) contentStage.inert = true;
+// Try audible autoplay immediately. If the browser blocks it, the first real
+// interaction will retry without turning the page into an entrance gate.
+void startAudio();
 
-async function enterSite() {
-  if (body.classList.contains('is-entered')) return;
-  window.scrollTo(0, 0);
-  body.classList.add('is-entering');
-  requestAnimationFrame(() => body.classList.add('is-entered'));
-  if (contentStage) contentStage.inert = false;
-  await startAudio();
-  window.setTimeout(() => body.classList.remove('is-entering'), reduceMotion.matches ? 0 : 1500);
-}
-
-enterButton?.addEventListener('click', enterSite);
+const overviewButton = document.querySelector<HTMLButtonElement>('#scroll-to-overview');
+const overview = document.querySelector<HTMLElement>('#overview');
+overviewButton?.addEventListener('click', () => {
+  if (!actuallyPlaying) void startAudio();
+  if (!overview) return;
+  window.scrollTo({
+    top: overview.offsetTop,
+    behavior: reduceMotion.matches ? 'auto' : 'smooth',
+  });
+});
 
 // Scroll reveals and active navigation
 const revealElements = document.querySelectorAll<HTMLElement>('[data-reveal]');
@@ -220,7 +284,8 @@ if ('IntersectionObserver' in window) {
         .filter((entry) => entry.isIntersecting)
         .sort((a, b) => b.intersectionRatio - a.intersectionRatio)[0];
       if (!visible) return;
-      navLinks.forEach((link) => link.classList.toggle('active', link.dataset.navLink === visible.target.id));
+      const activeSection = (visible.target as HTMLElement).dataset.navSection ?? visible.target.id;
+      navLinks.forEach((link) => link.classList.toggle('active', link.dataset.navLink === activeSection));
     },
     { threshold: [0.2, 0.45, 0.7], rootMargin: '-18% 0px -55% 0px' },
   );
@@ -295,22 +360,28 @@ if (canvas && context) {
 const meteorLayer = document.querySelector<HTMLElement>('#meteor-layer');
 let meteorTimer = 0;
 
-function queueMeteor() {
+function spawnMeteor() {
+  if (!meteorLayer || document.hidden || reduceMotion.matches) return;
+  const meteor = document.createElement('i');
+  meteor.style.setProperty('--meteor-left', `${4 + Math.random() * 60}%`);
+  meteor.style.setProperty('--meteor-top', `${7 + Math.random() * 34}%`);
+  meteor.style.setProperty('--meteor-duration', `${1.8 + Math.random() * 0.9}s`);
+  meteorLayer.append(meteor);
+  meteorLayer.dataset.spawnCount = String(Number(meteorLayer.dataset.spawnCount ?? '0') + 1);
+  meteor.addEventListener('animationend', () => meteor.remove(), { once: true });
+}
+
+function queueMeteor(initial = false) {
   window.clearTimeout(meteorTimer);
   if (reduceMotion.matches) return;
   meteorTimer = window.setTimeout(() => {
-    if (body.classList.contains('is-entered') && !document.hidden && meteorLayer) {
-      const meteor = document.createElement('i');
-      meteor.style.setProperty('--meteor-left', `${15 + Math.random() * 65}%`);
-      meteor.style.setProperty('--meteor-top', `${8 + Math.random() * 32}%`);
-      meteorLayer.append(meteor);
-      meteor.addEventListener('animationend', () => meteor.remove(), { once: true });
-    }
-    queueMeteor();
-  }, 7000 + Math.random() * 5000);
+    spawnMeteor();
+    if (Math.random() > 0.72) window.setTimeout(spawnMeteor, 220 + Math.random() * 420);
+    queueMeteor(false);
+  }, initial ? 500 + Math.random() * 700 : 2800 + Math.random() * 2600);
 }
 
-queueMeteor();
+queueMeteor(true);
 
 window.addEventListener(
   'pointermove',
