@@ -305,6 +305,12 @@ test('course resources are grouped, searchable, and directly downloadable', asyn
   await expect(page.locator('[data-course-tab]')).toHaveCount(15);
   await expect(page.locator('[data-resource-file]')).toHaveCount(562);
 
+  const disclosure = page.locator('[data-library-disclosure]');
+  await expect(disclosure).not.toHaveAttribute('open', '');
+  await expect(page.locator('[data-resource-search]')).toBeHidden();
+  await page.locator('[data-library-summary]').click();
+  await expect(disclosure).toHaveAttribute('open', '');
+
   const search = page.locator('[data-resource-search]');
   await search.fill('Computer Systems');
   await expect(page.locator('[data-course-panel]:visible')).toHaveCount(1);
@@ -315,6 +321,11 @@ test('course resources are grouped, searchable, and directly downloadable', asyn
 
   await page.getByTestId('locale-toggle').click();
   await expect(search).toHaveAttribute('placeholder', '搜索文件、课程或格式…');
+
+  await page.locator('[data-library-summary]').click();
+  await expect(disclosure).not.toHaveAttribute('open', '');
+  await page.locator('[data-placeholder="false"]').evaluate((card: HTMLAnchorElement) => card.click());
+  await expect(disclosure).toHaveAttribute('open', '');
 });
 
 test('has no horizontal page overflow', async ({ page }) => {

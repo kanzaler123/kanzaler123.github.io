@@ -47,7 +47,38 @@ const repositoryZip = `${resources.repository.htmlUrl}/archive/refs/heads/${reso
     </div>
   </header>
 
-  <div class="course-library__toolbar">
+  <details class="course-library__disclosure" data-library-disclosure>
+    <summary data-library-summary>
+      <span class="disclosure-copy disclosure-copy--closed">
+        <b>
+          <span class="lang-copy lang-copy--en">Browse course resources</span>
+          <span class="lang-copy lang-copy--zh">浏览课程资料</span>
+        </b>
+        <small>
+          <span class="lang-copy lang-copy--en">Open the searchable course and download list</span>
+          <span class="lang-copy lang-copy--zh">展开可搜索的课程与下载列表</span>
+        </small>
+      </span>
+      <span class="disclosure-copy disclosure-copy--open">
+        <b>
+          <span class="lang-copy lang-copy--en">Hide resource list</span>
+          <span class="lang-copy lang-copy--zh">收起资料列表</span>
+        </b>
+        <small>
+          <span class="lang-copy lang-copy--en">Keep the project overview compact</span>
+          <span class="lang-copy lang-copy--zh">收起后为其他项目留出空间</span>
+        </small>
+      </span>
+      <span class="disclosure-preview" aria-hidden="true">
+        <i>PDF</i><i>PPTX</i><i>DOCX</i>
+      </span>
+      <span class="disclosure-toggle" aria-hidden="true">
+        <svg viewBox="0 0 24 24"><path d="m6 9 6 6 6-6" /></svg>
+      </span>
+    </summary>
+
+    <div class="course-library__body">
+    <div class="course-library__toolbar">
     <label class="resource-search">
       <span class="sr-only lang-copy lang-copy--en">Search all course resources</span>
       <span class="sr-only lang-copy lang-copy--zh">搜索全部课程资料</span>
@@ -185,6 +216,8 @@ const repositoryZip = `${resources.repository.htmlUrl}/archive/refs/heads/${reso
     <span class="lang-copy lang-copy--en">Files are served directly from GitHub.</span>
     <span class="lang-copy lang-copy--zh">所有文件均由 GitHub 直接提供。</span>
   </footer>
+    </div>
+  </details>
 </article>
 
 <script>
@@ -271,6 +304,41 @@ const repositoryZip = `${resources.repository.htmlUrl}/archive/refs/heads/${reso
   .course-library__stats small { display: block; }
   .course-library__stats strong { font-family: var(--display); font-size: 32px; font-weight: 520; }
   .course-library__stats small { color: rgba(221, 225, 255, 0.55); font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; }
+
+  .course-library__disclosure > summary {
+    min-height: 78px;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto 48px;
+    align-items: center;
+    gap: 22px;
+    padding: 13px clamp(20px, 3vw, 34px);
+    list-style: none;
+    cursor: pointer;
+    background: linear-gradient(90deg, rgba(78, 89, 184, 0.15), rgba(255, 255, 255, 0.025));
+    transition: background 180ms ease;
+  }
+
+  .course-library__disclosure > summary::-webkit-details-marker { display: none; }
+  .course-library__disclosure > summary:hover { background: linear-gradient(90deg, rgba(96, 107, 211, 0.22), rgba(255, 255, 255, 0.045)); }
+  .disclosure-copy b,
+  .disclosure-copy small { display: block; }
+  .disclosure-copy b { font-family: var(--display); font-size: 22px; font-weight: 520; }
+  .disclosure-copy small { margin-top: 1px; color: rgba(218, 222, 255, 0.5); font-size: 11px; }
+  .disclosure-copy--open { display: none; }
+  .course-library__disclosure[open] .disclosure-copy--closed { display: none; }
+  .course-library__disclosure[open] .disclosure-copy--open { display: block; }
+
+  .disclosure-preview { display: flex; gap: 7px; }
+  .disclosure-preview i { padding: 4px 7px; border: 1px solid rgba(169, 180, 255, 0.16); border-radius: 7px; color: rgba(203, 210, 255, 0.56); font-size: 8px; font-style: normal; letter-spacing: 0.05em; }
+  .disclosure-toggle { width: 42px; height: 42px; display: grid; place-items: center; border: 1px solid rgba(178, 188, 255, 0.2); border-radius: 50%; background: rgba(255, 255, 255, 0.055); }
+  .disclosure-toggle svg { width: 20px; fill: none; stroke: #dce1ff; stroke-width: 1.6; transition: transform 260ms ease; }
+  .course-library__disclosure[open] .disclosure-toggle svg { transform: rotate(180deg); }
+  .course-library__body { border-top: 1px solid rgba(171, 181, 255, 0.12); animation: resource-drawer-open 420ms cubic-bezier(0.16, 0.78, 0.24, 1) both; }
+
+  @keyframes resource-drawer-open {
+    from { opacity: 0; transform: translateY(-12px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
 
   .course-library__toolbar {
     display: grid;
@@ -408,6 +476,8 @@ const repositoryZip = `${resources.repository.htmlUrl}/archive/refs/heads/${reso
     .course-library h3 { font-size: clamp(42px, 13vw, 60px); }
     .course-library__stats { justify-content: space-between; }
     .course-library__stats strong { font-size: 27px; }
+    .course-library__disclosure > summary { grid-template-columns: minmax(0, 1fr) 42px; gap: 12px; min-height: 72px; }
+    .disclosure-preview { display: none; }
     .course-library__toolbar { grid-template-columns: 1fr 1fr; }
     .resource-search { grid-column: 1 / -1; }
     .course-library__workspace { grid-template-columns: 1fr; }

@@ -1,6 +1,7 @@
 const library = document.querySelector<HTMLElement>('[data-course-library]');
 
 if (library) {
+  const disclosure = library.querySelector<HTMLDetailsElement>('[data-library-disclosure]');
   const tabs = [...library.querySelectorAll<HTMLButtonElement>('[data-course-tab]')];
   const panels = [...library.querySelectorAll<HTMLElement>('[data-course-panel]')];
   const search = library.querySelector<HTMLInputElement>('[data-resource-search]');
@@ -8,6 +9,23 @@ if (library) {
   const status = library.querySelector<HTMLOutputElement>('[data-resource-status]');
   const empty = library.querySelector<HTMLElement>('[data-resource-empty]');
   let activeCourse = tabs[0]?.dataset.courseTab || '';
+
+  const openLibrary = () => {
+    if (disclosure) disclosure.open = true;
+  };
+
+  if (window.location.hash === '#course-resources') openLibrary();
+  document.querySelectorAll<HTMLAnchorElement>('a[href="#course-resources"]').forEach((link) => {
+    link.addEventListener('click', openLibrary);
+  });
+  window.addEventListener('hashchange', () => {
+    if (window.location.hash === '#course-resources') openLibrary();
+  });
+  disclosure?.addEventListener('toggle', () => {
+    if (disclosure.open) return;
+    const top = library.getBoundingClientRect().top;
+    if (top < 72) library.scrollIntoView({ block: 'start', behavior: 'smooth' });
+  });
 
   const setStatus = (count: number, searching = false) => {
     if (!status) return;
