@@ -5,18 +5,29 @@
     "avatarUrl": "https://avatars.githubusercontent.com/u/193775423?v=4",
     "htmlUrl": "https://github.com/kanzaler123",
     "bio": null,
-    "publicRepos": 43,
+    "publicRepos": 44,
     "followers": 0
   },
   "repositories": [
     {
+      "name": "fdu-course-resources",
+      "htmlUrl": "https://github.com/kanzaler123/fdu-course-resources",
+      "description": null,
+      "language": null,
+      "stars": 0,
+      "forks": 0,
+      "updatedAt": "2026-07-20T01:51:11Z",
+      "archived": false,
+      "fork": false
+    },
+    {
       "name": "kanzaler123.github.io",
       "htmlUrl": "https://github.com/kanzaler123/kanzaler123.github.io",
       "description": "Kanzaler's animated bilingual starfield portfolio",
-      "language": "CSS",
+      "language": "TypeScript",
       "stars": 0,
       "forks": 0,
-      "updatedAt": "2026-07-19T08:43:38Z",
+      "updatedAt": "2026-07-19T12:05:34Z",
       "archived": false,
       "fork": false
     },
@@ -483,5 +494,5 @@
       "fork": true
     }
   ],
-  "generatedAt": "2026-07-19T09:48:42.337Z"
+  "generatedAt": "2026-07-20T02:21:57.449Z"
 }

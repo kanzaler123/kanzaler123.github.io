@@ -2,6 +2,7 @@
 import { getCollection } from 'astro:content';
 import { Image, Picture } from 'astro:assets';
 import BaseLayout from '../layouts/BaseLayout.astro';
+import CourseLibrary from '../components/CourseLibrary.astro';
 import heroBackground from '../assets/hero-background.png';
 import profileAvatar from '../assets/avatar.jpg';
 import { siteContent } from '../content/site';
@@ -214,18 +215,29 @@ const petals = Array.from({ length: 26 }, (_, index) => ({
           </a>
         </article>
 
-        {projects.map((project, index) => (
-          <article
-            class="feature-card deck-card"
+        {projects.map((project, index) => {
+          const CardTag = project.href ? 'a' : 'article';
+          return (
+          <CardTag
+            href={project.href}
+            class:list={['feature-card', 'deck-card', { 'feature-card--live': !project.placeholder }]}
             data-placeholder={String(project.placeholder)}
             style={`--card-index:${index}; --card-image-position:${project.imagePosition}`}
           >
             <div class="feature-card__image">
               <Image src={heroBackground} width={640} height={360} alt="" loading="lazy" quality={68} />
-              <span class="coming-badge">
-                <span class="lang-copy lang-copy--en">Coming Soon</span>
-                <span class="lang-copy lang-copy--zh">即将呈现</span>
-              </span>
+              {project.placeholder ? (
+                <span class="coming-badge">
+                  <span class="lang-copy lang-copy--en">Coming Soon</span>
+                  <span class="lang-copy lang-copy--zh">即将呈现</span>
+                </span>
+              ) : (
+                <span class="coming-badge coming-badge--live">
+                  <i aria-hidden="true"></i>
+                  <span class="lang-copy lang-copy--en">Open now</span>
+                  <span class="lang-copy lang-copy--zh">现已开放</span>
+                </span>
+              )}
             </div>
             <div class="feature-card__body">
               <p class="card-kicker">
@@ -242,8 +254,8 @@ const petals = Array.from({ length: 26 }, (_, index) => ({
               </p>
               <span class="card-spark" aria-hidden="true">✦</span>
             </div>
-          </article>
-        ))}
+          </CardTag>
+        );})}
         </section>
       </div>
     </section>
@@ -280,6 +292,7 @@ const petals = Array.from({ length: 26 }, (_, index) => ({
             </a>
           </div>
         </div>
+        <CourseLibrary />
       </section>
 
       <section id="notes" class="content-section notes-section" aria-labelledby="notes-title">

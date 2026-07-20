@@ -7,10 +7,11 @@
     "dev": "astro dev",
     "start": "astro dev",
     "sync:github": "node scripts/sync-github.mjs",
+    "sync:resources": "node scripts/sync-course-resources.mjs",
     "prepare:music": "node scripts/prepare-media.mjs",
     "check": "astro check",
     "build": "astro build",
-    "build:ci": "npm run sync:github && npm run check && astro build",
+    "build:ci": "npm run sync:github && npm run sync:resources && npm run check && astro build",
     "preview": "astro preview",
     "test": "playwright test"
   },

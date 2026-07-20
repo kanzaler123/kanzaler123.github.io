@@ -17,6 +17,7 @@ export interface FeaturedProject {
   summary: LocalizedText;
   category: LocalizedText;
   repo?: string;
+  href?: string;
   tags: string[];
   placeholder: boolean;
   imagePosition: string;
@@ -81,15 +82,17 @@ export const siteContent: SiteContent = {
       imagePosition: '18% center',
     },
     {
-      id: 'project-journal',
-      title: { en: 'Project Journal', zhCN: '项目手记' },
+      id: 'course-resources',
+      title: { en: 'FDU Course Resources', zhCN: '复旦课程资料库' },
       summary: {
-        en: 'Records from building, experimenting, and making ideas real.',
-        zhCN: '记录构建、实验，以及让想法成为现实的过程。',
+        en: 'Notes, slides, exercises, and references organized by course.',
+        zhCN: '按课程整理的笔记、课件、习题与参考资料，可直接浏览和下载。',
       },
-      category: { en: 'Project', zhCN: '项目' },
-      tags: ['AI', 'Building'],
-      placeholder: true,
+      category: { en: 'Open Resource', zhCN: '开放资料' },
+      repo: 'fdu-course-resources',
+      href: '#course-resources',
+      tags: ['FDU', 'Education', 'Open Resource'],
+      placeholder: false,
       imagePosition: '52% center',
     },
     {

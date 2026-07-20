@@ -855,8 +855,12 @@ html[data-locale='zh-CN'] .lang-copy--en {
 }
 
 .feature-card {
+  display: block;
   transition: transform 240ms ease, box-shadow 240ms ease;
 }
+
+.feature-card--live { cursor: pointer; }
+.feature-card--live:focus-visible { outline-color: #1b235f; }
 
 .feature-card:hover {
   transform: translateY(-7px);
@@ -920,6 +924,23 @@ html[data-locale='zh-CN'] .lang-copy--en {
   font-size: 9px;
   letter-spacing: 0.1em;
   text-transform: uppercase;
+}
+
+.coming-badge--live {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  color: #effff9;
+  border-color: rgba(176, 255, 225, 0.36);
+  background: rgba(15, 93, 79, 0.68);
+}
+
+.coming-badge--live i {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #95f5d0;
+  box-shadow: 0 0 10px #8ceac9;
 }
 
 .feature-card__body {

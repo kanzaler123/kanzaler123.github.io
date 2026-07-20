@@ -1,0 +1,433 @@
+---
+import resourceData from '../data/course-resources.json';
+import type { CourseResourceSnapshot } from '../types/course-resources';
+
+const resources = resourceData as CourseResourceSnapshot;
+const formatBytes = (bytes: number) => {
+  if (bytes >= 1024 * 1024 * 1024) return `${(bytes / (1024 * 1024 * 1024)).toFixed(2)} GB`;
+  if (bytes < 1024 * 1024) return `${Math.max(1, Math.round(bytes / 1024))} KB`;
+  return `${(bytes / (1024 * 1024)).toFixed(bytes >= 10 * 1024 * 1024 ? 0 : 1)} MB`;
+};
+const categoryNames: Record<string, { en: string; zhCN: string }> = {
+  General: { en: 'General', zhCN: '综合资料' },
+  '参考资料': { en: 'References', zhCN: '参考资料' },
+  '复习笔记': { en: 'Study Notes', zhCN: '复习笔记' },
+  '课件': { en: 'Lecture Slides', zhCN: '课件' },
+  '习题': { en: 'Exercises', zhCN: '习题' },
+  '官方答案': { en: 'Answer Keys', zhCN: '官方答案' },
+  '往年真题': { en: 'Past Exams', zhCN: '往年真题' },
+  '小组作业': { en: 'Group Work', zhCN: '小组作业' },
+  '课程论文': { en: 'Course Papers', zhCN: '课程论文' },
+};
+const repositoryZip = `${resources.repository.htmlUrl}/archive/refs/heads/${resources.repository.branch}.zip`;
+---
+
+<article id="course-resources" class="course-library" data-course-library data-reveal>
+  <div class="course-library__aurora" aria-hidden="true"></div>
+  <header class="course-library__header">
+    <div>
+      <p class="course-library__eyebrow">
+        <i aria-hidden="true"></i>
+        <span class="lang-copy lang-copy--en">Open resource · Fudan University</span>
+        <span class="lang-copy lang-copy--zh">开放资料 · 复旦大学</span>
+      </p>
+      <h3>
+        <span class="lang-copy lang-copy--en">FDU Course Resources</span>
+        <span class="lang-copy lang-copy--zh">复旦课程资料库</span>
+      </h3>
+      <p class="course-library__intro">
+        <span class="lang-copy lang-copy--en">Notes, slides, exercises, and references arranged by course—open a drawer and take what you need.</span>
+        <span class="lang-copy lang-copy--zh">按课程整理笔记、课件、习题与参考资料——打开一格星屉，下载你需要的内容。</span>
+      </p>
+    </div>
+    <div class="course-library__stats" aria-label="Resource statistics">
+      <span><strong>{resources.totals.courses}</strong><small class="lang-copy lang-copy--en">courses</small><small class="lang-copy lang-copy--zh">门课程</small></span>
+      <span><strong>{resources.totals.files}</strong><small class="lang-copy lang-copy--en">files</small><small class="lang-copy lang-copy--zh">份资料</small></span>
+      <span><strong>{formatBytes(resources.totals.bytes)}</strong><small class="lang-copy lang-copy--en">in orbit</small><small class="lang-copy lang-copy--zh">资源总量</small></span>
+    </div>
+  </header>
+
+  <div class="course-library__toolbar">
+    <label class="resource-search">
+      <span class="sr-only lang-copy lang-copy--en">Search all course resources</span>
+      <span class="sr-only lang-copy lang-copy--zh">搜索全部课程资料</span>
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m20 20-4.4-4.4m2.4-5.1a7.5 7.5 0 1 1-15 0 7.5 7.5 0 0 1 15 0Z" /></svg>
+      <input
+        type="search"
+        data-resource-search
+        data-placeholder-en="Search files, courses, or formats…"
+        data-placeholder-zh="搜索文件、课程或格式…"
+        placeholder="Search files, courses, or formats…"
+        autocomplete="off"
+      />
+      <button type="button" data-resource-clear aria-label="Clear search" hidden>×</button>
+    </label>
+    <a class="repository-download" href={repositoryZip}>
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12m0 0 5-5m-5 5-5-5M5 20h14" /></svg>
+      <span class="lang-copy lang-copy--en">Download all</span>
+      <span class="lang-copy lang-copy--zh">下载全部</span>
+    </a>
+    <a class="repository-link" href={resources.repository.htmlUrl} target="_blank" rel="noreferrer">
+      GitHub <span aria-hidden="true">↗</span>
+    </a>
+  </div>
+
+  <div class="course-library__workspace">
+    <nav class="course-tabs" role="tablist" aria-label="Courses">
+      {resources.courses.map((course, index) => (
+        <button
+          type="button"
+          role="tab"
+          aria-selected={index === 0}
+          aria-controls={`course-panel-${course.id}`}
+          id={`course-tab-${course.id}`}
+          data-course-tab={course.id}
+          data-course-search={`${course.name.en} ${course.name.zhCN}`}
+        >
+          <span>
+            <b class="lang-copy lang-copy--en">{course.name.en}</b>
+            <b class="lang-copy lang-copy--zh">{course.name.zhCN}</b>
+            <small>{course.fileCount} files · {formatBytes(course.totalBytes)}</small>
+          </span>
+          <i aria-hidden="true">›</i>
+        </button>
+      ))}
+    </nav>
+
+    <section class="resource-browser" aria-live="polite">
+      <div class="resource-browser__status">
+        <output data-resource-status>
+          <span class="lang-copy lang-copy--en">Showing {resources.courses[0]?.fileCount ?? 0} files</span>
+          <span class="lang-copy lang-copy--zh">正在显示 {resources.courses[0]?.fileCount ?? 0} 份资料</span>
+        </output>
+        <span class="resource-browser__hint">
+          <span class="lang-copy lang-copy--en">Choose a course or search everything</span>
+          <span class="lang-copy lang-copy--zh">选择课程，或搜索全部资料</span>
+        </span>
+      </div>
+
+      {resources.courses.map((course, courseIndex) => (
+        <div
+          id={`course-panel-${course.id}`}
+          class="course-panel"
+          role="tabpanel"
+          aria-labelledby={`course-tab-${course.id}`}
+          data-course-panel={course.id}
+          data-course-name={`${course.name.en} ${course.name.zhCN}`}
+          hidden={courseIndex !== 0}
+        >
+          <div class="course-panel__heading">
+            <div>
+              <p>{String(courseIndex + 1).padStart(2, '0')} / {String(resources.totals.courses).padStart(2, '0')}</p>
+              <h4 class="lang-copy lang-copy--en">{course.name.en}</h4>
+              <h4 class="lang-copy lang-copy--zh">{course.name.zhCN}</h4>
+            </div>
+            <span>{course.fileCount} · {formatBytes(course.totalBytes)}</span>
+          </div>
+
+          {course.categories.map((category, categoryIndex) => {
+            const localized = categoryNames[category.name] || { en: category.name, zhCN: category.name };
+            return (
+              <details class="resource-category" data-resource-category open={categoryIndex === 0}>
+                <summary>
+                  <span>
+                    <i aria-hidden="true"></i>
+                    <b class="lang-copy lang-copy--en">{localized.en}</b>
+                    <b class="lang-copy lang-copy--zh">{localized.zhCN}</b>
+                  </span>
+                  <small>{category.files.length}</small>
+                </summary>
+                <ul>
+                  {category.files.map((file) => (
+                    <li
+                      class="resource-file"
+                      data-resource-file
+                      data-search={`${course.name.en} ${course.name.zhCN} ${category.name} ${file.name} ${file.extension}`.toLocaleLowerCase('zh-CN')}
+                    >
+                      <span class={`file-type file-type--${file.extension.toLowerCase()}`}>{file.extension.slice(0, 4)}</span>
+                      <span class="resource-file__name">
+                        <b title={file.name}>{file.name}</b>
+                        <small>{formatBytes(file.size)}</small>
+                      </span>
+                      <span class="resource-file__actions">
+                        <a href={file.viewUrl} target="_blank" rel="noreferrer">
+                          <span class="lang-copy lang-copy--en">View</span>
+                          <span class="lang-copy lang-copy--zh">查看</span>
+                        </a>
+                        <a class="file-download" href={file.downloadUrl} download>
+                          <span class="lang-copy lang-copy--en">Download</span>
+                          <span class="lang-copy lang-copy--zh">下载</span>
+                          <svg viewBox="0 0 20 20" aria-hidden="true"><path d="M10 2v10m0 0 4-4m-4 4L6 8M3 17h14" /></svg>
+                        </a>
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              </details>
+            );
+          })}
+        </div>
+      ))}
+      <div class="resource-empty" data-resource-empty hidden>
+        <span aria-hidden="true">✦</span>
+        <p class="lang-copy lang-copy--en">No files found in this constellation.</p>
+        <p class="lang-copy lang-copy--zh">这片星图中没有找到匹配的资料。</p>
+      </div>
+    </section>
+  </div>
+
+  <footer class="course-library__footer">
+    <span>
+      <span class="lang-copy lang-copy--en">Snapshot updated</span>
+      <span class="lang-copy lang-copy--zh">资源快照更新于</span>
+      <time datetime={resources.generatedAt}>{new Date(resources.generatedAt).toLocaleDateString('en-CA')}</time>
+    </span>
+    <span class="lang-copy lang-copy--en">Files are served directly from GitHub.</span>
+    <span class="lang-copy lang-copy--zh">所有文件均由 GitHub 直接提供。</span>
+  </footer>
+</article>
+
+<script>
+  import '../scripts/course-library';
+</script>
+
+<style>
+  .course-library {
+    position: relative;
+    grid-column: 1 / -1;
+    isolation: isolate;
+    overflow: hidden;
+    scroll-margin-top: 92px;
+    margin-top: 64px;
+    border: 1px solid rgba(170, 180, 255, 0.28);
+    border-radius: 34px;
+    color: var(--frost);
+    background: linear-gradient(145deg, rgba(12, 17, 75, 0.96), rgba(5, 7, 43, 0.97));
+    box-shadow: 0 34px 100px rgba(0, 2, 35, 0.55), inset 0 1px 0 rgba(255, 255, 255, 0.11);
+  }
+
+  .course-library__aurora {
+    position: absolute;
+    z-index: -1;
+    inset: -30% -10% auto 20%;
+    height: 520px;
+    opacity: 0.48;
+    background: radial-gradient(ellipse, rgba(95, 114, 255, 0.4), rgba(157, 89, 237, 0.12) 42%, transparent 72%);
+    filter: blur(24px);
+    pointer-events: none;
+  }
+
+  .course-library__header {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 48px;
+    padding: clamp(34px, 5vw, 62px);
+    border-bottom: 1px solid rgba(171, 181, 255, 0.14);
+  }
+
+  .course-library__eyebrow {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin: 0 0 10px;
+    color: #b6c5ff;
+    font-size: 12px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+  }
+
+  .course-library__eyebrow i {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: #96f5d1;
+    box-shadow: 0 0 14px #80edca;
+  }
+
+  .course-library h3 {
+    margin: 0;
+    font-family: var(--display);
+    font-size: clamp(46px, 6vw, 76px);
+    font-weight: 460;
+    line-height: 0.98;
+    letter-spacing: -0.035em;
+  }
+
+  .course-library__intro {
+    max-width: 700px;
+    margin: 20px 0 0;
+    color: rgba(228, 231, 255, 0.7);
+    font-size: 16px;
+  }
+
+  .course-library__stats {
+    display: flex;
+    align-items: center;
+    gap: clamp(18px, 3vw, 36px);
+  }
+
+  .course-library__stats span { min-width: 76px; }
+  .course-library__stats strong,
+  .course-library__stats small { display: block; }
+  .course-library__stats strong { font-family: var(--display); font-size: 32px; font-weight: 520; }
+  .course-library__stats small { color: rgba(221, 225, 255, 0.55); font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; }
+
+  .course-library__toolbar {
+    display: grid;
+    grid-template-columns: minmax(240px, 1fr) auto auto;
+    gap: 10px;
+    padding: 18px clamp(20px, 3vw, 34px);
+    border-bottom: 1px solid rgba(171, 181, 255, 0.12);
+    background: rgba(1, 3, 31, 0.34);
+  }
+
+  .resource-search {
+    display: grid;
+    grid-template-columns: 22px 1fr auto;
+    align-items: center;
+    gap: 10px;
+    min-height: 46px;
+    padding: 0 15px;
+    border: 1px solid rgba(174, 184, 255, 0.2);
+    border-radius: 14px;
+    background: rgba(255, 255, 255, 0.055);
+  }
+
+  .resource-search:focus-within { border-color: rgba(196, 202, 255, 0.68); box-shadow: 0 0 0 3px rgba(119, 112, 255, 0.13); }
+  .resource-search svg { width: 20px; fill: none; stroke: #afb8ef; stroke-width: 1.6; }
+  .resource-search input { min-width: 0; border: 0; outline: 0; color: #fff; background: transparent; }
+  .resource-search input::placeholder { color: rgba(220, 224, 255, 0.43); }
+  .resource-search button { width: 27px; height: 27px; border: 0; border-radius: 50%; color: #dce0ff; background: rgba(255, 255, 255, 0.1); cursor: pointer; }
+
+  .repository-download,
+  .repository-link {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    min-height: 46px;
+    padding: 0 17px;
+    border: 1px solid rgba(174, 184, 255, 0.2);
+    border-radius: 14px;
+    color: #e8eaff;
+    background: rgba(255, 255, 255, 0.055);
+    font-size: 14px;
+    transition: border-color 180ms ease, background 180ms ease, transform 180ms ease;
+  }
+
+  .repository-download { color: #11184f; background: #e8eaff; }
+  .repository-download svg { width: 18px; fill: none; stroke: currentColor; stroke-width: 1.7; }
+  .repository-download:hover,
+  .repository-link:hover { transform: translateY(-2px); }
+
+  .course-library__workspace {
+    display: grid;
+    grid-template-columns: minmax(230px, 0.29fr) minmax(0, 1fr);
+    min-height: 620px;
+  }
+
+  .course-tabs {
+    max-height: 720px;
+    overflow-y: auto;
+    padding: 18px 12px 24px 18px;
+    border-right: 1px solid rgba(171, 181, 255, 0.13);
+    scrollbar-width: thin;
+    scrollbar-color: rgba(161, 171, 255, 0.34) transparent;
+  }
+
+  .course-tabs button {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    padding: 12px 13px;
+    border: 1px solid transparent;
+    border-radius: 13px;
+    color: rgba(226, 229, 255, 0.62);
+    text-align: left;
+    background: transparent;
+    cursor: pointer;
+    transition: color 180ms ease, background 180ms ease, border-color 180ms ease;
+  }
+
+  .course-tabs button:hover { color: #fff; background: rgba(255, 255, 255, 0.055); }
+  .course-tabs button[aria-selected='true'] { color: #fff; border-color: rgba(178, 187, 255, 0.18); background: linear-gradient(100deg, rgba(94, 105, 215, 0.28), rgba(111, 82, 203, 0.08)); }
+  .course-tabs b,
+  .course-tabs small { display: block; }
+  .course-tabs b { overflow: hidden; font-weight: 520; text-overflow: ellipsis; white-space: nowrap; }
+  .course-tabs small { margin-top: 2px; color: rgba(205, 211, 255, 0.42); font-size: 10px; }
+  .course-tabs i { color: #aab4fa; font-style: normal; font-size: 22px; }
+
+  .resource-browser { min-width: 0; padding: 22px clamp(18px, 3vw, 34px) 34px; }
+  .resource-browser__status { display: flex; justify-content: space-between; gap: 16px; margin-bottom: 20px; color: rgba(218, 222, 255, 0.56); font-size: 12px; }
+  .resource-browser__status output { color: #cbd2ff; }
+
+  .course-panel__heading { display: flex; align-items: end; justify-content: space-between; gap: 18px; padding: 2px 4px 22px; }
+  .course-panel__heading p { margin: 0 0 3px; color: #8e9be6; font-size: 10px; letter-spacing: 0.16em; }
+  .course-panel__heading h4 { margin: 0; font-family: var(--display); font-size: 35px; font-weight: 520; line-height: 1; }
+  .course-panel__heading > span { color: rgba(217, 222, 255, 0.5); font-size: 12px; }
+
+  .resource-category { margin-bottom: 10px; border: 1px solid rgba(170, 180, 255, 0.13); border-radius: 15px; background: rgba(255, 255, 255, 0.025); }
+  .resource-category summary { display: flex; align-items: center; justify-content: space-between; gap: 18px; padding: 13px 16px; list-style: none; cursor: pointer; }
+  .resource-category summary::-webkit-details-marker { display: none; }
+  .resource-category summary span { display: flex; align-items: center; gap: 10px; }
+  .resource-category summary i { width: 7px; height: 7px; border: 1px solid #9da9f0; transform: rotate(45deg); transition: background 180ms ease; }
+  .resource-category[open] summary i { background: #b8c1ff; box-shadow: 0 0 10px rgba(167, 177, 255, 0.75); }
+  .resource-category summary b { font-weight: 520; }
+  .resource-category summary small { min-width: 27px; padding: 2px 8px; border-radius: 999px; color: #b8c0f1; text-align: center; background: rgba(141, 151, 231, 0.12); }
+  .resource-category ul { margin: 0; padding: 0 10px 10px; list-style: none; }
+
+  .resource-file { display: grid; grid-template-columns: 46px minmax(0, 1fr) auto; align-items: center; gap: 12px; min-height: 56px; padding: 7px 8px; border-top: 1px solid rgba(173, 181, 245, 0.08); }
+  .file-type { width: 40px; padding: 5px 2px; border: 1px solid rgba(171, 184, 255, 0.17); border-radius: 8px; color: #b8c5ff; text-align: center; background: rgba(113, 127, 225, 0.08); font-size: 9px; font-weight: 650; letter-spacing: 0.06em; }
+  .file-type--pdf { color: #ffc9cd; border-color: rgba(255, 154, 166, 0.22); background: rgba(231, 90, 109, 0.08); }
+  .file-type--pptx { color: #ffd3a6; border-color: rgba(255, 186, 118, 0.22); }
+  .file-type--docx { color: #b8d8ff; }
+  .file-type--jpg,
+  .file-type--png { color: #d6c2ff; }
+  .resource-file__name { min-width: 0; }
+  .resource-file__name b { display: block; overflow: hidden; color: rgba(242, 243, 255, 0.85); font-size: 13px; font-weight: 470; text-overflow: ellipsis; white-space: nowrap; }
+  .resource-file__name small { color: rgba(204, 209, 245, 0.38); font-size: 10px; }
+  .resource-file__actions { display: flex; align-items: center; gap: 7px; }
+  .resource-file__actions a { display: inline-flex; align-items: center; gap: 5px; padding: 6px 9px; border-radius: 8px; color: rgba(221, 225, 255, 0.58); font-size: 11px; }
+  .resource-file__actions a:hover { color: #fff; background: rgba(255, 255, 255, 0.07); }
+  .resource-file__actions .file-download { color: #dce1ff; background: rgba(132, 146, 244, 0.1); }
+  .file-download svg { width: 13px; fill: none; stroke: currentColor; stroke-width: 1.6; }
+
+  .resource-empty { min-height: 340px; display: grid; place-content: center; color: rgba(221, 225, 255, 0.54); text-align: center; }
+  .resource-empty[hidden] { display: none; }
+  .resource-empty span { color: #a7b3ff; font-size: 30px; }
+  .resource-empty p { margin: 8px 0 0; }
+
+  .course-library__footer { display: flex; justify-content: space-between; gap: 20px; padding: 16px clamp(20px, 3vw, 34px); border-top: 1px solid rgba(171, 181, 255, 0.11); color: rgba(207, 212, 249, 0.42); font-size: 11px; }
+  .course-library__footer time { margin-left: 5px; color: #b7c0f4; }
+
+  @media (max-width: 820px) {
+    .course-library { margin-top: 34px; border-radius: 24px; }
+    .course-library__header { grid-template-columns: 1fr; gap: 28px; padding: 32px 24px; }
+    .course-library h3 { font-size: clamp(42px, 13vw, 60px); }
+    .course-library__stats { justify-content: space-between; }
+    .course-library__stats strong { font-size: 27px; }
+    .course-library__toolbar { grid-template-columns: 1fr 1fr; }
+    .resource-search { grid-column: 1 / -1; }
+    .course-library__workspace { grid-template-columns: 1fr; }
+    .course-tabs { display: flex; max-height: none; overflow-x: auto; padding: 14px 16px; border-right: 0; border-bottom: 1px solid rgba(171, 181, 255, 0.13); scroll-snap-type: x mandatory; }
+    .course-tabs button { min-width: min(70vw, 250px); scroll-snap-align: start; }
+    .resource-browser { padding: 20px 14px 28px; }
+    .resource-browser__hint { display: none; }
+    .resource-file { grid-template-columns: 40px minmax(0, 1fr); }
+    .resource-file__actions { grid-column: 2; justify-content: flex-end; }
+    .course-library__footer { flex-direction: column; }
+  }
+
+  @media (max-width: 480px) {
+    .course-library__stats { gap: 9px; }
+    .course-library__stats span { min-width: 0; }
+    .course-library__stats strong { font-size: 23px; }
+    .course-library__toolbar { grid-template-columns: 1fr; }
+    .repository-download,
+    .repository-link { min-height: 42px; }
+    .course-panel__heading h4 { font-size: 29px; }
+    .resource-file__actions a { padding: 6px 8px; }
+  }
+</style>

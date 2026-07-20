@@ -295,8 +295,26 @@ test('switches to Chinese and remembers the locale', async ({ page }) => {
 test('placeholder cards never expose fake links', async ({ page }) => {
   await page.goto('/');
   const placeholders = page.locator('[data-placeholder="true"]');
-  await expect(placeholders).toHaveCount(3);
+  await expect(placeholders).toHaveCount(2);
   await expect(placeholders.locator('a')).toHaveCount(0);
+});
+
+test('course resources are grouped, searchable, and directly downloadable', async ({ page }) => {
+  await page.goto('/');
+  await expect(page.locator('[data-placeholder="false"]')).toHaveAttribute('href', '#course-resources');
+  await expect(page.locator('[data-course-tab]')).toHaveCount(15);
+  await expect(page.locator('[data-resource-file]')).toHaveCount(562);
+
+  const search = page.locator('[data-resource-search]');
+  await search.fill('Computer Systems');
+  await expect(page.locator('[data-course-panel]:visible')).toHaveCount(1);
+  await expect(page.locator('[data-resource-file]:visible').first()).toBeVisible();
+
+  const download = page.locator('[data-resource-file]:visible .file-download').first();
+  await expect(download).toHaveAttribute('href', /github\.com\/kanzaler123\/fdu-course-resources\/raw\/refs\/heads\/main\//);
+
+  await page.getByTestId('locale-toggle').click();
+  await expect(search).toHaveAttribute('placeholder', '搜索文件、课程或格式…');
 });
 
 test('has no horizontal page overflow', async ({ page }) => {
