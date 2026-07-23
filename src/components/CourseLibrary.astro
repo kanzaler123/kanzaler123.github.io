@@ -421,11 +421,12 @@ const repositoryZip = `${resources.repository.htmlUrl}/archive/refs/heads/${reso
 
   .course-tabs button:hover { color: #fff; background: rgba(255, 255, 255, 0.055); }
   .course-tabs button[aria-selected='true'] { color: #fff; border-color: rgba(178, 187, 255, 0.18); background: linear-gradient(100deg, rgba(94, 105, 215, 0.28), rgba(111, 82, 203, 0.08)); }
+  .course-tabs button > span { min-width: 0; flex: 1 1 auto; text-align: left; }
   .course-tabs b,
   .course-tabs small { display: block; }
   .course-tabs b { overflow: hidden; font-weight: 520; text-overflow: ellipsis; white-space: nowrap; }
   .course-tabs small { margin-top: 2px; color: rgba(205, 211, 255, 0.42); font-size: 10px; }
-  .course-tabs i { color: #aab4fa; font-style: normal; font-size: 22px; }
+  .course-tabs i { flex: 0 0 auto; color: #aab4fa; font-style: normal; font-size: 22px; }
 
   .resource-browser { min-width: 0; padding: 22px clamp(18px, 3vw, 34px) 34px; }
   .resource-browser__status { display: flex; justify-content: space-between; gap: 16px; margin-bottom: 20px; color: rgba(218, 222, 255, 0.56); font-size: 12px; }

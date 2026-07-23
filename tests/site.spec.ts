@@ -328,6 +328,23 @@ test('course resources are grouped, searchable, and directly downloadable', asyn
   await expect(disclosure).toHaveAttribute('open', '');
 });
 
+test('long course names stay inside their course tab', async ({ page }) => {
+  await page.setViewportSize({ width: 700, height: 900 });
+  await page.goto('/');
+  await page.locator('[data-library-summary]').click();
+
+  const firstTab = page.locator('[data-course-tab]').first();
+  await firstTab.locator('.lang-copy--en').evaluate((label) => {
+    label.textContent = '2025入党积极分子考试题库发展对象结业考试真题电子版';
+  });
+
+  const dimensions = await firstTab.evaluate((tab) => ({
+    clientWidth: tab.clientWidth,
+    scrollWidth: tab.scrollWidth,
+  }));
+  expect(dimensions.scrollWidth).toBeLessThanOrEqual(dimensions.clientWidth);
+});
+
 test('has no horizontal page overflow', async ({ page }) => {
   await page.goto('/');
   for (const viewport of [
