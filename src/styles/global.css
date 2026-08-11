@@ -1592,3 +1592,116 @@ html[data-locale='zh-CN'] .lang-copy--en {
   .audio-wave-ring__line { opacity: 0.38; }
   [data-reveal] { opacity: 1; transform: none; }
 }
+
+/* ============================================================
+   Cinematic entrance, dramatic type, living sky
+   (only for users who allow motion)
+   ============================================================ */
+@media (prefers-reduced-motion: no-preference) {
+  /* 1. The scene fades in; the illustration then breathes with a slow push */
+  .hero-media {
+    animation: hero-scene-in 1.9s cubic-bezier(0.22, 0.7, 0.3, 1) backwards;
+  }
+  .hero-media img {
+    animation: hero-kenburns 46s ease-in-out 1.8s infinite alternate;
+  }
+
+  /* 2. A point of starlight blooms where the ring will be, then the ring arrives */
+  .hero-orb-motion::before {
+    content: '';
+    position: absolute;
+    inset: -2%;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(255, 255, 255, 0.96) 0%, rgba(198, 187, 255, 0.55) 18%, transparent 46%);
+    transform: scale(0);
+    opacity: 0;
+    pointer-events: none;
+    animation: orb-bloom 1.5s cubic-bezier(0.2, 0.7, 0.3, 1) 0.3s backwards;
+  }
+  .hero-orb-motion {
+    animation: orb-arrive 1.5s cubic-bezier(0.2, 0.75, 0.25, 1) 0.55s backwards;
+  }
+
+  /* 3. The name condenses from wide tracking while its letters rise one by one */
+  .entry-name {
+    animation: name-track 1.6s cubic-bezier(0.2, 0.75, 0.25, 1) 0.7s backwards;
+  }
+  .entry-letter {
+    display: inline-block;
+    will-change: transform, opacity, filter;
+    animation: letter-rise 0.9s cubic-bezier(0.19, 0.7, 0.3, 1) backwards;
+    animation-delay: calc(0.82s + var(--i) * 60ms);
+  }
+  .feather-mark {
+    animation: letter-rise 0.8s ease backwards;
+    animation-delay: calc(0.82s + 8 * 60ms);
+  }
+
+  /* 4. Divider, tagline and call-to-action settle in sequence */
+  .star-divider {
+    animation: tagline-up 0.9s cubic-bezier(0.2, 0.7, 0.3, 1) 1.5s backwards;
+  }
+  .entry-tagline {
+    animation: tagline-up 1s cubic-bezier(0.2, 0.7, 0.3, 1) 1.66s backwards;
+  }
+  .enter-button {
+    animation: button-in 1s cubic-bezier(0.2, 0.7, 0.3, 1) 1.9s backwards;
+  }
+
+  /* 5. Petals drift in only once the scene is set */
+  .petal-layer {
+    animation: petals-arrive 2.6s ease 1.5s backwards;
+  }
+}
+
+@keyframes hero-scene-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes hero-kenburns {
+  from { transform: scale(1) translateY(0); }
+  to { transform: scale(1.09) translateY(-1.6%); }
+}
+
+@keyframes orb-bloom {
+  0% { transform: scale(0); opacity: 0; }
+  32% { opacity: 1; }
+  100% { transform: scale(1.6); opacity: 0; }
+}
+
+@keyframes orb-arrive {
+  from {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(calc(var(--orb-scale) * 0.7));
+  }
+  to {
+    opacity: var(--orb-opacity);
+    transform: translate(-50%, -50%) scale(var(--orb-scale));
+  }
+}
+
+@keyframes name-track {
+  from { letter-spacing: 0.34em; opacity: 0; }
+  to { letter-spacing: 0.015em; opacity: 1; }
+}
+
+@keyframes letter-rise {
+  from { opacity: 0; transform: translateY(0.34em) scale(0.93); filter: blur(7px); }
+  to { opacity: 1; transform: translateY(0) scale(1); filter: blur(0); }
+}
+
+@keyframes tagline-up {
+  from { opacity: 0; transform: translateY(18px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes button-in {
+  from { opacity: 0; transform: translateY(20px) scale(0.8); }
+  to { opacity: var(--button-opacity); transform: translateY(var(--button-y)) scale(var(--button-scale)); }
+}
+
+@keyframes petals-arrive {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}

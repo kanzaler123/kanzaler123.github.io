@@ -673,6 +673,8 @@ const canvas = document.querySelector<HTMLCanvasElement>('#star-field');
 const context = canvas?.getContext('2d');
 type Star = { x: number; y: number; radius: number; alpha: number; speed: number; phase: number };
 let stars: Star[] = [];
+let pointerStarX = -1;
+let pointerStarY = -1;
 let canvasWidth = 0;
 let canvasHeight = 0;
 let animationFrame = 0;
@@ -703,12 +705,22 @@ function drawStars(time: number) {
   if (!canvas || !context) return;
   context.clearRect(0, 0, canvasWidth, canvasHeight);
   for (const star of stars) {
-    const alpha = star.alpha * (0.66 + Math.sin(time * star.speed + star.phase) * 0.34);
+    let alpha = star.alpha * (0.66 + Math.sin(time * star.speed + star.phase) * 0.34);
+    let radius = star.radius;
+    if (pointerStarX >= 0) {
+      const dx = star.x - pointerStarX;
+      const dy = star.y - pointerStarY;
+      const influence = Math.max(0, 1 - Math.hypot(dx, dy) / 190);
+      if (influence > 0) {
+        alpha = Math.min(1, alpha + influence * 0.55);
+        radius += influence * 1;
+      }
+    }
     context.beginPath();
     context.fillStyle = `rgba(220, 224, 255, ${Math.max(0.05, alpha)})`;
     context.shadowColor = 'rgba(146, 127, 255, .9)';
-    context.shadowBlur = star.radius > 1 ? 7 : 3;
-    context.arc(star.x, star.y, star.radius, 0, Math.PI * 2);
+    context.shadowBlur = radius > 1 ? 7 : 3;
+    context.arc(star.x, star.y, radius, 0, Math.PI * 2);
     context.fill();
   }
   context.shadowBlur = 0;
@@ -745,9 +757,15 @@ function queueMeteor(initial = false) {
   if (reduceMotion.matches) return;
   meteorTimer = window.setTimeout(() => {
     spawnMeteor();
-    if (Math.random() > 0.72) window.setTimeout(spawnMeteor, 220 + Math.random() * 420);
+    if (initial) {
+      // A small opening flurry so the sky feels alive as the entrance settles.
+      window.setTimeout(spawnMeteor, 900 + Math.random() * 300);
+      window.setTimeout(spawnMeteor, 1700 + Math.random() * 500);
+    } else if (Math.random() > 0.72) {
+      window.setTimeout(spawnMeteor, 220 + Math.random() * 420);
+    }
     queueMeteor(false);
-  }, initial ? 500 + Math.random() * 700 : 2800 + Math.random() * 2600);
+  }, initial ? 1400 : 2800 + Math.random() * 2600);
 }
 
 queueMeteor(true);
@@ -756,6 +774,8 @@ window.addEventListener(
   'pointermove',
   (event) => {
     if (reduceMotion.matches || event.pointerType === 'touch') return;
+    pointerStarX = event.clientX;
+    pointerStarY = event.clientY;
     const x = (event.clientX / window.innerWidth - 0.5) * 2;
     const y = (event.clientY / window.innerHeight - 0.5) * 2;
     root.style.setProperty('--parallax-x', `${x * -9}px`);
