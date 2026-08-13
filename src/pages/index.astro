@@ -3,6 +3,7 @@ import { getCollection } from 'astro:content';
 import { Image, Picture } from 'astro:assets';
 import BaseLayout from '../layouts/BaseLayout.astro';
 import CourseLibrary from '../components/CourseLibrary.astro';
+import CardArt from '../components/CardArt.astro';
 import heroBackground from '../assets/hero-background.png';
 import profileAvatar from '../assets/avatar.jpg';
 import { siteContent } from '../content/site';
@@ -195,7 +196,7 @@ const petals = Array.from({ length: 26 }, (_, index) => ({
 
         <span id="overview" class="overview-anchor" aria-hidden="true"></span>
         <section id="overview-deck" class="hero-deck-motion constellation-deck" aria-label="Featured work">
-        <article class="profile-card deck-card">
+        <article class="profile-card deck-card" data-tilt>
           <div class="avatar-shell">
             <Image
               src={profileAvatar}
@@ -224,10 +225,11 @@ const petals = Array.from({ length: 26 }, (_, index) => ({
             href={project.href}
             class:list={['feature-card', 'deck-card', { 'feature-card--live': !project.placeholder }]}
             data-placeholder={String(project.placeholder)}
-            style={`--card-index:${index}; --card-image-position:${project.imagePosition}`}
+            style={`--card-index:${index}`}
+            data-tilt
           >
             <div class="feature-card__image">
-              <Image src={heroBackground} width={640} height={360} alt="" loading="lazy" quality={68} />
+              <CardArt variant={project.art} />
               {project.placeholder ? (
                 <span class="coming-badge">
                   <span class="lang-copy lang-copy--en">Coming Soon</span>

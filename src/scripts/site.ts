@@ -785,3 +785,55 @@ window.addEventListener(
 );
 
 reduceMotion.addEventListener('change', () => window.location.reload());
+
+
+/* ------------------------------------------------------------------
+ * Cards follow the pointer: a rim of light tracks the cursor and the
+ * card tips a couple of degrees toward it. Pointer-only, motion-aware.
+ * ------------------------------------------------------------------ */
+(() => {
+  const cards = Array.from(document.querySelectorAll<HTMLElement>('[data-tilt]'));
+  if (!cards.length) return;
+
+  const finePointer = window.matchMedia('(hover: hover) and (pointer: fine)');
+  const stillness = window.matchMedia('(prefers-reduced-motion: reduce)');
+  const MAX_TILT = 2.5;
+
+  let frame = 0;
+  let pending: { card: HTMLElement; x: number; y: number } | null = null;
+
+  const paint = () => {
+    frame = 0;
+    if (!pending) return;
+    const { card, x, y } = pending;
+    card.style.setProperty('--mx', `${x * 100}%`);
+    card.style.setProperty('--my', `${y * 100}%`);
+    if (!stillness.matches) {
+      card.style.setProperty('--ry', `${(x - 0.5) * 2 * MAX_TILT}deg`);
+      card.style.setProperty('--rx', `${(0.5 - y) * 2 * MAX_TILT}deg`);
+    }
+  };
+
+  const reset = (card: HTMLElement) => {
+    pending = null;
+    card.style.removeProperty('--mx');
+    card.style.removeProperty('--my');
+    card.style.removeProperty('--rx');
+    card.style.removeProperty('--ry');
+  };
+
+  cards.forEach((card) => {
+    card.addEventListener('pointermove', (event) => {
+      if (!finePointer.matches || event.pointerType !== 'mouse') return;
+      const rect = card.getBoundingClientRect();
+      pending = {
+        card,
+        x: Math.min(1, Math.max(0, (event.clientX - rect.left) / rect.width)),
+        y: Math.min(1, Math.max(0, (event.clientY - rect.top) / rect.height)),
+      };
+      if (!frame) frame = requestAnimationFrame(paint);
+    });
+    card.addEventListener('pointerleave', () => reset(card));
+    card.addEventListener('blur', () => reset(card));
+  });
+})();

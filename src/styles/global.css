@@ -15,6 +15,17 @@
   --header-height: 52px;
   --parallax-x: 0px;
   --parallax-y: 0px;
+
+  /* The daylit band the page passes through between the hero and the night.
+     These replace a dozen one-off hex values that had drifted out of step. */
+  --dawn-100: #e8ecff;
+  --dawn-ink: #161c56;
+  --dawn-body: #4c5490;
+  --dawn-muted: #7a81b8;
+  --dawn-accent: #666cc8;
+
+  /* One vertical rhythm for every section, so the page breathes evenly. */
+  --space-section: clamp(88px, 9vw, 148px);
   color-scheme: dark;
   font-synthesis: none;
   scroll-behavior: smooth;
@@ -485,7 +496,14 @@ html[data-locale='zh-CN'] .lang-copy--en {
   left: -5%;
   height: 62%;
   opacity: var(--haze-opacity);
-  background: linear-gradient(180deg, transparent, rgba(186, 199, 255, 0.18) 22%, rgba(235, 239, 255, 0.7) 100%);
+  background: linear-gradient(
+    180deg,
+    transparent 0%,
+    rgba(186, 199, 255, 0.16) 20%,
+    rgba(214, 222, 255, 0.62) 54%,
+    rgba(232, 236, 255, 0.94) 80%,
+    var(--dawn-100) 90%
+  );
   filter: blur(16px);
   will-change: opacity;
 }
@@ -725,7 +743,16 @@ html[data-locale='zh-CN'] .lang-copy--en {
   min-height: 100vh;
   padding-top: 0;
   background:
-    linear-gradient(180deg, #e8ecff 0, #f6f6ff 47rem, #090b41 69rem, var(--night-950) 100rem),
+    linear-gradient(
+      180deg,
+      var(--dawn-100) 0,
+      #f6f6ff 34rem,
+      #e9ecff 54rem,
+      #b9c0ee 60rem,
+      #2b2f7e 66rem,
+      #0c1046 71rem,
+      var(--night-950) 82rem
+    ),
     var(--night-950);
 }
 
@@ -779,7 +806,7 @@ html[data-locale='zh-CN'] .lang-copy--en {
   min-height: 290px;
   border: 1px solid rgba(122, 131, 203, 0.17);
   border-radius: 20px;
-  color: var(--ink);
+  color: var(--dawn-ink);
   background: rgba(250, 250, 255, 0.86);
   box-shadow: 0 11px 30px rgba(45, 53, 130, 0.11);
 }
@@ -829,7 +856,7 @@ html[data-locale='zh-CN'] .lang-copy--en {
 .profile-card p {
   max-width: 210px;
   margin: 8px 0 14px;
-  color: #3e467d;
+  color: var(--dawn-body);
   font-size: 14px;
 }
 
@@ -854,17 +881,44 @@ html[data-locale='zh-CN'] .lang-copy--en {
   fill: #596098;
 }
 
+.deck-card::before {
+  content: '';
+  position: absolute;
+  z-index: 4;
+  inset: 0;
+  padding: 1px;
+  border-radius: inherit;
+  opacity: 0;
+  pointer-events: none;
+  background: radial-gradient(
+    220px circle at var(--mx, 50%) var(--my, 50%),
+    rgba(163, 146, 255, 0.95),
+    rgba(163, 146, 255, 0) 72%
+  );
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  mask-composite: exclude;
+  transition: opacity 300ms ease;
+}
+
+.deck-card:hover::before,
+.deck-card:focus-visible::before {
+  opacity: 1;
+}
+
 .feature-card {
   display: block;
-  transition: transform 240ms ease, box-shadow 240ms ease;
+  transform: perspective(900px) translateY(var(--lift, 0px)) rotateX(var(--rx, 0deg)) rotateY(var(--ry, 0deg));
+  transition: transform 320ms cubic-bezier(0.2, 0.7, 0.3, 1), box-shadow 320ms ease;
 }
 
 .feature-card--live { cursor: pointer; }
 .feature-card--live:focus-visible { outline-color: #1b235f; }
 
 .feature-card:hover {
-  transform: translateY(-7px);
-  box-shadow: 0 20px 48px rgba(51, 59, 146, 0.22);
+  --lift: -8px;
+  box-shadow: 0 22px 52px rgba(51, 59, 146, 0.24);
 }
 
 .feature-card::after {
@@ -889,25 +943,30 @@ html[data-locale='zh-CN'] .lang-copy--en {
   overflow: hidden;
 }
 
-.feature-card__image img {
+.card-art {
   width: 100%;
   height: 100%;
-  object-fit: cover;
-  object-position: var(--card-image-position);
-  filter: saturate(0.86) contrast(1.04);
-  transform: scale(1.04);
-  transition: transform 500ms ease;
+  display: block;
+  transform: scale(1.02);
+  transform-origin: 50% 62%;
+  transition: transform 620ms cubic-bezier(0.2, 0.7, 0.3, 1);
 }
 
-.feature-card:hover .feature-card__image img {
-  transform: scale(1.1);
+.feature-card:hover .card-art {
+  transform: scale(1.07);
 }
 
 .feature-card__image::after {
   content: '';
   position: absolute;
   inset: 0;
-  background: linear-gradient(180deg, transparent 52%, rgba(19, 23, 83, 0.32));
+  background: linear-gradient(
+    180deg,
+    rgba(10, 13, 62, 0) 44%,
+    rgba(10, 13, 62, 0.22) 74%,
+    rgba(250, 250, 255, 0.28) 93%,
+    rgba(250, 250, 255, 0.78) 100%
+  );
 }
 
 .coming-badge {
@@ -950,7 +1009,7 @@ html[data-locale='zh-CN'] .lang-copy--en {
 
 .card-kicker {
   margin: 0 0 4px;
-  color: #7a80b4;
+  color: var(--dawn-muted);
   font-size: 10px;
   letter-spacing: 0.12em;
   text-transform: uppercase;
@@ -964,7 +1023,7 @@ html[data-locale='zh-CN'] .lang-copy--en {
 
 .feature-card__body > p:not(.card-kicker) {
   margin: 7px 0 0;
-  color: #626994;
+  color: var(--dawn-body);
   font-size: 13px;
   line-height: 1.4;
 }
@@ -980,25 +1039,30 @@ html[data-locale='zh-CN'] .lang-copy--en {
 .content-section {
   width: min(1180px, calc(100% - 48px));
   margin: 0 auto;
-  padding: 150px 0 30px;
+  padding: var(--space-section) 0 0;
 }
 
 .projects-section {
-  min-height: 760px;
   display: grid;
   grid-template-columns: minmax(0, 0.92fr) minmax(420px, 1.08fr);
   align-items: center;
-  gap: clamp(60px, 9vw, 130px);
-  padding-top: 210px;
-  color: var(--ink);
+  column-gap: clamp(52px, 7vw, 108px);
+  row-gap: clamp(40px, 4.5vw, 68px);
+  /* The deck floats over the fold; this is the clearance beneath it, no more. */
+  padding-top: clamp(56px, 6vw, 96px);
+  color: var(--dawn-ink);
+}
+
+.projects-section > .course-library {
+  grid-column: 1 / -1;
 }
 
 .projects-section .section-index {
-  color: #696fc5;
+  color: var(--dawn-accent);
 }
 
 .projects-section .section-heading > p:last-child {
-  color: #59618c;
+  color: var(--dawn-body);
 }
 
 .section-index {
@@ -1029,6 +1093,7 @@ html[data-locale='zh-CN'] .lang-copy--en {
 
 .orbit-panel {
   position: relative;
+  color: var(--frost);
   min-height: 430px;
   display: grid;
   grid-template-columns: 1fr 0.86fr;
@@ -1038,10 +1103,13 @@ html[data-locale='zh-CN'] .lang-copy--en {
   border: 1px solid rgba(180, 181, 255, 0.16);
   border-radius: 34px;
   background:
-    radial-gradient(circle at 24% 42%, rgba(88, 74, 214, 0.24), transparent 40%),
-    linear-gradient(145deg, rgba(16, 19, 89, 0.83), rgba(6, 8, 52, 0.66));
-  box-shadow: 0 36px 100px rgba(0, 0, 30, 0.38), inset 0 1px 0 rgba(255, 255, 255, 0.06);
-  backdrop-filter: blur(20px);
+    radial-gradient(circle at 22% 36%, rgba(126, 106, 255, 0.34), transparent 48%),
+    radial-gradient(circle at 84% 88%, rgba(66, 54, 176, 0.32), transparent 54%),
+    linear-gradient(150deg, #191e7d 0%, #0c1052 56%, #070a3a 100%);
+  box-shadow:
+    0 44px 96px rgba(21, 26, 96, 0.34),
+    0 4px 14px rgba(21, 26, 96, 0.14),
+    inset 0 1px 0 rgba(255, 255, 255, 0.12);
 }
 
 .orbit-graphic {
@@ -1117,7 +1185,7 @@ html[data-locale='zh-CN'] .lang-copy--en {
 }
 
 .orbit-copy strong {
-  margin: 6px 0 -3px;
+  margin: 6px 0 4px;
   font-family: var(--display);
   font-size: 84px;
   font-weight: 450;
@@ -1125,9 +1193,10 @@ html[data-locale='zh-CN'] .lang-copy--en {
 }
 
 .orbit-copy > span {
-  color: rgba(231, 232, 255, 0.6);
-  font-size: 13px;
-  line-height: 1.35;
+  max-width: 26ch;
+  color: rgba(231, 232, 255, 0.66);
+  font-size: 13.5px;
+  line-height: 1.5;
 }
 
 .orbit-copy a,
@@ -1150,11 +1219,10 @@ html[data-locale='zh-CN'] .lang-copy--en {
 }
 
 .notes-section {
-  min-height: 630px;
   display: grid;
   grid-template-columns: 0.9fr 1.1fr;
   align-items: center;
-  gap: 90px;
+  gap: clamp(48px, 6vw, 90px);
 }
 
 .empty-notes {
@@ -1172,18 +1240,10 @@ html[data-locale='zh-CN'] .lang-copy--en {
   width: 90px;
   height: 90px;
   border-radius: 50%;
-  background: #f7f2ff;
-  box-shadow: 0 0 44px rgba(195, 190, 255, 0.34);
-}
-
-.empty-notes__moon::after {
-  content: '';
-  width: 94px;
-  height: 94px;
-  display: block;
-  border-radius: 50%;
-  background: var(--night-950);
-  transform: translate(25px, -12px);
+  background: radial-gradient(circle at 34% 32%, #fff, #f2ecff 58%, #ded6ff 100%);
+  filter: drop-shadow(0 0 26px rgba(186, 178, 255, 0.45));
+  -webkit-mask-image: radial-gradient(circle 52px at 74px 22px, transparent 98%, #000 100%);
+  mask-image: radial-gradient(circle 52px at 74px 22px, transparent 98%, #000 100%);
 }
 
 .empty-notes p {
@@ -1226,12 +1286,11 @@ html[data-locale='zh-CN'] .lang-copy--en {
 .note-card p { margin: 0; color: rgba(230, 231, 255, 0.6); }
 
 .about-section {
-  min-height: 850px;
   display: grid;
   grid-template-columns: 0.86fr 1.14fr;
   align-items: center;
-  gap: clamp(60px, 10vw, 150px);
-  padding-bottom: 120px;
+  gap: clamp(56px, 8vw, 132px);
+  padding-bottom: clamp(72px, 8vw, 118px);
 }
 
 .about-portrait {
@@ -1501,15 +1560,27 @@ html[data-locale='zh-CN'] .lang-copy--en {
   .enter-star { width: 64px; height: 64px; }
 
   .content-stage {
-    background: linear-gradient(180deg, #eef1ff 0, #f7f7ff 73rem, #080a3b 93rem, var(--night-950) 112rem);
+    background: linear-gradient(
+      180deg,
+      var(--dawn-100) 0,
+      #f7f7ff 52rem,
+      #e9ecff 82rem,
+      #b9c0ee 88rem,
+      #2b2f7e 93rem,
+      #0c1046 99rem,
+      var(--night-950) 112rem
+    );
   }
 
   .constellation-deck {
     width: calc(100% - 24px);
-    grid-auto-columns: min(82vw, 320px);
+    grid-auto-columns: min(74vw, 296px);
     padding: 10px;
     border-radius: 22px;
+    scroll-padding-inline: 10px;
   }
+
+  .deck-card { scroll-snap-align: start; }
 
   .deck-card { min-height: 0; }
   .profile-card { min-height: 278px; }
@@ -1519,10 +1590,9 @@ html[data-locale='zh-CN'] .lang-copy--en {
 
   .content-section {
     width: calc(100% - 36px);
-    padding-top: 120px;
   }
 
-  .projects-section { min-height: auto; padding-top: 190px; }
+  .projects-section { padding-top: 78px; }
   .section-heading h2,
   .about-copy h2 { font-size: clamp(46px, 14vw, 66px); }
 
@@ -1537,7 +1607,6 @@ html[data-locale='zh-CN'] .lang-copy--en {
   .orbit-graphic { width: min(280px, 74vw); }
   .orbit-copy { align-items: center; }
 
-  .notes-section { min-height: 620px; }
   .empty-notes { align-items: flex-start; padding: 32px 12px; }
   .empty-notes__moon { width: 58px; height: 58px; }
   .empty-notes__moon::after { width: 62px; height: 62px; transform: translate(17px, -8px); }
@@ -1574,8 +1643,14 @@ html[data-locale='zh-CN'] .lang-copy--en {
   .constellation-deck { width: min(1420px, calc(100% - 80px)); }
 }
 
+@media (hover: none) {
+  .deck-card::before { display: none; }
+  .feature-card { transform: none; }
+}
+
 @media (prefers-reduced-motion: reduce) {
   :root { scroll-behavior: auto; }
+  .feature-card { transform: none !important; }
   *, *::before, *::after {
     scroll-behavior: auto !important;
     animation-duration: 0.001ms !important;

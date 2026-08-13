@@ -11,6 +11,8 @@ export interface SocialLink {
   href: string;
 }
 
+export type CardArtVariant = 'notes' | 'library' | 'reading';
+
 export interface FeaturedProject {
   id: string;
   title: LocalizedText;
@@ -20,7 +22,7 @@ export interface FeaturedProject {
   href?: string;
   tags: string[];
   placeholder: boolean;
-  imagePosition: string;
+  art: CardArtVariant;
 }
 
 export interface MusicSettings {
@@ -79,7 +81,7 @@ export const siteContent: SiteContent = {
       category: { en: 'Notes', zhCN: '笔记' },
       tags: ['Writing', 'Reflection'],
       placeholder: true,
-      imagePosition: '18% center',
+      art: 'notes',
     },
     {
       id: 'course-resources',
@@ -93,7 +95,7 @@ export const siteContent: SiteContent = {
       href: '#course-resources',
       tags: ['FDU', 'Education', 'Open Resource'],
       placeholder: false,
-      imagePosition: '52% center',
+      art: 'library',
     },
     {
       id: 'paper-reading',
@@ -105,7 +107,7 @@ export const siteContent: SiteContent = {
       category: { en: 'Reading', zhCN: '阅读' },
       tags: ['Research', 'Learning'],
       placeholder: true,
-      imagePosition: '82% center',
+      art: 'reading',
     },
   ],
   music: {
