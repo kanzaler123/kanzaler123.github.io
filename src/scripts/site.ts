@@ -848,19 +848,28 @@ if (deck && deckDots.length) {
     const cards = Array.from(deck.querySelectorAll<HTMLElement>('.deck-card'));
     const maxScroll = deck.scrollWidth - deck.clientWidth;
     let active = 0;
-    if (maxScroll > 1 && deck.scrollLeft >= maxScroll - 2) {
+    if (maxScroll <= 1 || deck.scrollLeft <= 2) {
+      active = 0;
+    } else if (deck.scrollLeft >= maxScroll - 2) {
       active = cards.length - 1;
     } else {
-      const origin = deck.getBoundingClientRect().left;
+      const centered = cards[0] && getComputedStyle(cards[0]).scrollSnapAlign === 'center';
+      const deckRect = deck.getBoundingClientRect();
+      const origin = deckRect.left + (centered ? deckRect.width / 2 : 0);
       let best = Number.POSITIVE_INFINITY;
       cards.forEach((card, index) => {
-        const distance = Math.abs(card.getBoundingClientRect().left - origin);
+        const cardRect = card.getBoundingClientRect();
+        const position = cardRect.left + (centered ? cardRect.width / 2 : 0);
+        const distance = Math.abs(position - origin);
         if (distance < best) { best = distance; active = index; }
       });
     }
     deckDots.forEach((dot, index) => dot.classList.toggle('is-active', index === active));
   };
-  deck.addEventListener('scroll', () => {
+  const scheduleDeckPager = () => {
     if (!frame) frame = requestAnimationFrame(syncDeckPager);
-  }, { passive: true });
+  };
+  deck.addEventListener('scroll', scheduleDeckPager, { passive: true });
+  window.addEventListener('resize', scheduleDeckPager, { passive: true });
+  syncDeckPager();
 }
