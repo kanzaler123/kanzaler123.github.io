@@ -37,6 +37,8 @@ export interface SiteContent {
   eyebrow: LocalizedText;
   tagline: LocalizedText;
   about: LocalizedText;
+  aboutLong: LocalizedText;
+  interests: LocalizedText[];
   navigation: Array<{ id: string; label: LocalizedText }>;
   socialLinks: SocialLink[];
   featuredProjects: FeaturedProject[];
@@ -57,6 +59,15 @@ export const siteContent: SiteContent = {
     en: 'Curious about intelligence, moved by stories, and always learning.',
     zhCN: '对智能保持好奇，被故事打动，也始终保持学习。',
   },
+  aboutLong: {
+    en: 'This is where I keep what I am learning: open course materials from Fudan University, notes written after the world goes quiet, and papers worth a second read.',
+    zhCN: '这里存放我正在学习的东西：复旦大学的开放课程资料、夜深后写下的笔记，以及值得再读一遍的论文。',
+  },
+  interests: [
+    { en: 'AI', zhCN: '人工智能' },
+    { en: 'Learning', zhCN: '学习' },
+    { en: 'Imagination', zhCN: '想象' },
+  ],
   navigation: [
     { id: 'home', label: { en: 'Home', zhCN: '首页' } },
     { id: 'projects', label: { en: 'Projects', zhCN: '项目' } },

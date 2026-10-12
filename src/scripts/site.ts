@@ -837,3 +837,30 @@ reduceMotion.addEventListener('change', () => window.location.reload());
     card.addEventListener('blur', () => reset(card));
   });
 })();
+
+// Position dots for the swipeable card deck on narrow screens.
+const deck = document.querySelector<HTMLElement>('#overview-deck');
+const deckDots = Array.from(document.querySelectorAll<HTMLElement>('[data-deck-pager] i'));
+if (deck && deckDots.length) {
+  let frame = 0;
+  const syncDeckPager = () => {
+    frame = 0;
+    const cards = Array.from(deck.querySelectorAll<HTMLElement>('.deck-card'));
+    const maxScroll = deck.scrollWidth - deck.clientWidth;
+    let active = 0;
+    if (maxScroll > 1 && deck.scrollLeft >= maxScroll - 2) {
+      active = cards.length - 1;
+    } else {
+      const origin = deck.getBoundingClientRect().left;
+      let best = Number.POSITIVE_INFINITY;
+      cards.forEach((card, index) => {
+        const distance = Math.abs(card.getBoundingClientRect().left - origin);
+        if (distance < best) { best = distance; active = index; }
+      });
+    }
+    deckDots.forEach((dot, index) => dot.classList.toggle('is-active', index === active));
+  };
+  deck.addEventListener('scroll', () => {
+    if (!frame) frame = requestAnimationFrame(syncDeckPager);
+  }, { passive: true });
+}

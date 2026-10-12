@@ -261,13 +261,18 @@ const petals = Array.from({ length: 26 }, (_, index) => ({
           </CardTag>
         );})}
         </section>
+        <div class="deck-pager" aria-hidden="true" data-deck-pager>
+          {Array.from({ length: projects.length + 1 }, (_, index) => (
+            <i class:list={{ 'is-active': index === 0 }}></i>
+          ))}
+        </div>
       </div>
     </section>
 
     <div class="content-stage">
       <section id="projects" class="content-section projects-section" aria-labelledby="projects-title">
         <div class="section-heading" data-reveal>
-          <p class="section-index">01 — Orbit</p>
+          <p class="section-index">01 — <span class="lang-copy lang-copy--en">Orbit</span><span class="lang-copy lang-copy--zh">轨道</span></p>
           <h2 id="projects-title">
             <span class="lang-copy lang-copy--en">Projects in orbit</span>
             <span class="lang-copy lang-copy--zh">轨道中的项目</span>
@@ -283,7 +288,7 @@ const petals = Array.from({ length: 26 }, (_, index) => ({
             <span class="orbit-core">✦</span>
           </div>
           <div class="orbit-copy">
-            <p class="live-label"><i></i> GitHub snapshot</p>
+            <p class="live-label"><i></i> <span class="lang-copy lang-copy--en">GitHub snapshot</span><span class="lang-copy lang-copy--zh">GitHub 快照</span></p>
             <strong>{repoCount}</strong>
             <span>
               <span class="lang-copy lang-copy--en">public repositories synchronized at build time</span>
@@ -301,7 +306,7 @@ const petals = Array.from({ length: 26 }, (_, index) => ({
 
       <section id="notes" class="content-section notes-section" aria-labelledby="notes-title">
         <div class="section-heading" data-reveal>
-          <p class="section-index">02 — Fragments</p>
+          <p class="section-index">02 — <span class="lang-copy lang-copy--en">Fragments</span><span class="lang-copy lang-copy--zh">片段</span></p>
           <h2 id="notes-title">
             <span class="lang-copy lang-copy--en">Notes after midnight</span>
             <span class="lang-copy lang-copy--zh">午夜之后的笔记</span>
@@ -316,9 +321,14 @@ const petals = Array.from({ length: 26 }, (_, index) => ({
                 <span class="lang-copy lang-copy--zh">页面已经翻开，第一行文字尚未抵达。</span>
               </p>
               <small>
-                <span class="lang-copy lang-copy--en">Notes will appear here when they are ready.</span>
-                <span class="lang-copy lang-copy--zh">准备好之后，笔记会出现在这里。</span>
+                <span class="lang-copy lang-copy--en">Notes will appear here when they are ready. Until then, the course library is open.</span>
+                <span class="lang-copy lang-copy--zh">准备好之后，笔记会出现在这里。在此之前，课程资料库已经开放。</span>
               </small>
+              <a class="empty-notes__link" href="#course-resources">
+                <span class="lang-copy lang-copy--en">Browse course resources</span>
+                <span class="lang-copy lang-copy--zh">浏览课程资料</span>
+                <span aria-hidden="true">↑</span>
+              </a>
             </div>
           </div>
         ) : (
@@ -346,17 +356,22 @@ const petals = Array.from({ length: 26 }, (_, index) => ({
           <span class="portrait-orbit"></span>
         </div>
         <div class="about-copy" data-reveal>
-          <p class="section-index">03 — About</p>
+          <p class="section-index">03 — <span class="lang-copy lang-copy--en">About</span><span class="lang-copy lang-copy--zh">关于</span></p>
           <h2 id="about-title">
             <span class="lang-copy lang-copy--en">Learning under the same sky.</span>
             <span class="lang-copy lang-copy--zh">在同一片星空下学习。</span>
           </h2>
           <p>
-            <span class="lang-copy lang-copy--en">{siteContent.about.en}</span>
-            <span class="lang-copy lang-copy--zh">{siteContent.about.zhCN}</span>
+            <span class="lang-copy lang-copy--en">{siteContent.aboutLong.en}</span>
+            <span class="lang-copy lang-copy--zh">{siteContent.aboutLong.zhCN}</span>
           </p>
           <ul class="interest-list" aria-label="Interests">
-            <li>AI</li><li>Learning</li><li>Imagination</li>
+            {siteContent.interests.map((interest) => (
+              <li>
+                <span class="lang-copy lang-copy--en">{interest.en}</span>
+                <span class="lang-copy lang-copy--zh">{interest.zhCN}</span>
+              </li>
+            ))}
           </ul>
           <a class="github-cta" href="https://github.com/kanzaler123" target="_blank" rel="noreferrer">
             <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2a10 10 0 0 0-3.16 19.49c.5.09.68-.22.68-.48v-1.87c-2.78.6-3.37-1.18-3.37-1.18-.45-1.16-1.11-1.47-1.11-1.47-.91-.62.07-.61.07-.61 1 .07 1.53 1.03 1.53 1.03.9 1.53 2.35 1.09 2.92.83.09-.65.35-1.09.64-1.34-2.22-.25-4.55-1.11-4.55-4.94 0-1.09.39-1.98 1.03-2.68-.1-.25-.45-1.27.1-2.64 0 0 .84-.27 2.75 1.02A9.56 9.56 0 0 1 12 6.82a9.5 9.5 0 0 1 2.5.34c1.9-1.29 2.74-1.02 2.74-1.02.55 1.37.2 2.39.1 2.64.64.7 1.03 1.59 1.03 2.68 0 3.84-2.34 4.68-4.57 4.93.36.31.68.92.68 1.86v2.76c0 .27.18.58.69.48A10 10 0 0 0 12 2Z" /></svg>

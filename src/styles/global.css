@@ -676,8 +676,9 @@ html[data-locale='zh-CN'] .lang-copy--en {
 }
 
 .entry-tagline {
-  max-width: 520px;
+  max-width: min(440px, 100%);
   margin: 0;
+  text-wrap: balance;
   color: rgba(248, 248, 255, 0.94);
   font-family: var(--display);
   font-size: clamp(17px, 1.5vw, 22px);
@@ -747,11 +748,13 @@ html[data-locale='zh-CN'] .lang-copy--en {
       180deg,
       var(--dawn-100) 0,
       #f6f6ff 34rem,
-      #e9ecff 54rem,
-      #b9c0ee 60rem,
-      #2b2f7e 66rem,
-      #0c1046 71rem,
-      var(--night-950) 82rem
+      #e9ecff 50rem,
+      #ccd2f5 56rem,
+      #959de0 61rem,
+      #4f57ab 65.5rem,
+      #252a76 69.5rem,
+      #0c1046 74rem,
+      var(--night-950) 84rem
     ),
     var(--night-950);
 }
@@ -787,6 +790,10 @@ html[data-locale='zh-CN'] .lang-copy--en {
 
 .hero-sequence[data-hero-phase='overview'] .constellation-deck {
   pointer-events: auto;
+}
+
+.deck-pager {
+  display: none;
 }
 
 [data-reveal] {
@@ -980,8 +987,8 @@ html[data-locale='zh-CN'] .lang-copy--en {
   color: #fff;
   background: rgba(7, 10, 67, 0.52);
   backdrop-filter: blur(8px);
-  font-size: 9px;
-  letter-spacing: 0.1em;
+  font-size: 10.5px;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
 }
 
@@ -1009,9 +1016,9 @@ html[data-locale='zh-CN'] .lang-copy--en {
 
 .card-kicker {
   margin: 0 0 4px;
-  color: var(--dawn-muted);
-  font-size: 10px;
-  letter-spacing: 0.12em;
+  color: var(--dawn-accent);
+  font-size: 11.5px;
+  letter-spacing: 0.1em;
   text-transform: uppercase;
 }
 
@@ -1024,8 +1031,8 @@ html[data-locale='zh-CN'] .lang-copy--en {
 .feature-card__body > p:not(.card-kicker) {
   margin: 7px 0 0;
   color: var(--dawn-body);
-  font-size: 13px;
-  line-height: 1.4;
+  font-size: 14px;
+  line-height: 1.45;
 }
 
 .card-spark {
@@ -1067,9 +1074,9 @@ html[data-locale='zh-CN'] .lang-copy--en {
 
 .section-index {
   margin: 0 0 17px;
-  color: #9c9ff0;
-  font-size: 11px;
-  letter-spacing: 0.2em;
+  color: #a9acf4;
+  font-size: 12.5px;
+  letter-spacing: 0.16em;
   text-transform: uppercase;
 }
 
@@ -1168,9 +1175,9 @@ html[data-locale='zh-CN'] .lang-copy--en {
 
 .live-label {
   margin: 0;
-  color: #afb3ec;
-  font-size: 11px;
-  letter-spacing: 0.1em;
+  color: #c1c4f4;
+  font-size: 12px;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
 }
 
@@ -1194,8 +1201,8 @@ html[data-locale='zh-CN'] .lang-copy--en {
 
 .orbit-copy > span {
   max-width: 26ch;
-  color: rgba(231, 232, 255, 0.66);
-  font-size: 13.5px;
+  color: rgba(231, 232, 255, 0.74);
+  font-size: 15px;
   line-height: 1.5;
 }
 
@@ -1208,7 +1215,7 @@ html[data-locale='zh-CN'] .lang-copy--en {
   padding: 11px 16px;
   border: 1px solid rgba(205, 207, 255, 0.2);
   border-radius: 999px;
-  font-size: 13px;
+  font-size: 14px;
   transition: background 180ms ease, transform 180ms ease;
 }
 
@@ -1255,8 +1262,27 @@ html[data-locale='zh-CN'] .lang-copy--en {
 
 .empty-notes small {
   display: block;
-  margin-top: 8px;
-  color: rgba(221, 222, 255, 0.5);
+  margin-top: 10px;
+  color: rgba(221, 222, 255, 0.66);
+  font-size: 15px;
+}
+
+.empty-notes__link {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 20px;
+  padding: 10px 16px;
+  border: 1px solid rgba(205, 207, 255, 0.22);
+  border-radius: 999px;
+  color: #fff;
+  font-size: 14px;
+  transition: background 180ms ease, transform 180ms ease;
+}
+
+.empty-notes__link:hover {
+  background: rgba(129, 117, 237, 0.15);
+  transform: translateY(-2px);
 }
 
 .note-grid {
@@ -1272,9 +1298,9 @@ html[data-locale='zh-CN'] .lang-copy--en {
 }
 
 .note-card time {
-  color: #9fa3df;
-  font-size: 11px;
-  letter-spacing: 0.1em;
+  color: #aeb2e8;
+  font-size: 12.5px;
+  letter-spacing: 0.08em;
 }
 
 .note-card h3 {
@@ -1346,8 +1372,8 @@ html[data-locale='zh-CN'] .lang-copy--en {
   padding: 7px 13px;
   border: 1px solid rgba(187, 190, 255, 0.16);
   border-radius: 999px;
-  color: rgba(237, 238, 255, 0.7);
-  font-size: 12px;
+  color: rgba(237, 238, 255, 0.78);
+  font-size: 13.5px;
 }
 
 .github-cta svg {
@@ -1364,8 +1390,8 @@ html[data-locale='zh-CN'] .lang-copy--en {
   margin: 0 auto;
   padding: 35px 0 42px;
   border-top: 1px solid rgba(185, 188, 255, 0.12);
-  color: rgba(232, 233, 255, 0.5);
-  font-size: 13px;
+  color: rgba(232, 233, 255, 0.62);
+  font-size: 14px;
 }
 
 .site-footer > span {
@@ -1430,6 +1456,31 @@ html[data-locale='zh-CN'] .lang-copy--en {
   .constellation-deck::-webkit-scrollbar { display: none; }
 
   .deck-card { scroll-snap-align: center; }
+
+  .deck-pager {
+    position: absolute;
+    z-index: 14;
+    left: 50%;
+    bottom: 7px;
+    display: flex;
+    gap: 7px;
+    opacity: var(--deck-opacity);
+    transform: translateX(-50%);
+    pointer-events: none;
+  }
+
+  .deck-pager i {
+    width: 6px;
+    height: 6px;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.4);
+    transition: width 220ms ease, background 220ms ease;
+  }
+
+  .deck-pager i.is-active {
+    width: 18px;
+    background: #fff;
+  }
 
   .deck-card {
     min-height: 288px;
@@ -1555,7 +1606,7 @@ html[data-locale='zh-CN'] .lang-copy--en {
   .hero-orb-motion { width: min(84vw, 56svh, 440px); }
   .hero-copy-motion { width: min(88vw, 560px); }
   .entry-name { font-size: clamp(54px, 17vw, 74px); }
-  .entry-tagline { font-size: 17px; }
+  .entry-tagline { max-width: min(30ch, 68vw); font-size: 17px; }
   .enter-button { top: calc(100% + 14px); }
   .enter-star { width: 64px; height: 64px; }
 
@@ -1564,10 +1615,12 @@ html[data-locale='zh-CN'] .lang-copy--en {
       180deg,
       var(--dawn-100) 0,
       #f7f7ff 52rem,
-      #e9ecff 82rem,
-      #b9c0ee 88rem,
-      #2b2f7e 93rem,
-      #0c1046 99rem,
+      #e9ecff 80rem,
+      #ccd2f5 85.5rem,
+      #959de0 89.5rem,
+      #4f57ab 93rem,
+      #252a76 96.5rem,
+      #0c1046 100.5rem,
       var(--night-950) 112rem
     );
   }
