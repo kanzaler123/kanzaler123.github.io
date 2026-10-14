@@ -31,10 +31,10 @@ const repositoryZip = `${resources.repository.htmlUrl}/archive/refs/heads/${reso
         <span class="lang-copy lang-copy--en">Open resource · Fudan University</span>
         <span class="lang-copy lang-copy--zh">开放资料 · 复旦大学</span>
       </p>
-      <h3>
+      <h2>
         <span class="lang-copy lang-copy--en">FDU Course Resources</span>
         <span class="lang-copy lang-copy--zh">复旦课程资料库</span>
-      </h3>
+      </h2>
       <p class="course-library__intro">
         <span class="lang-copy lang-copy--en">Notes, slides, exercises, and references arranged by course—open a drawer and take what you need.</span>
         <span class="lang-copy lang-copy--zh">按课程整理笔记、课件、习题与参考资料——打开一格星屉，下载你需要的内容。</span>
@@ -231,7 +231,7 @@ const repositoryZip = `${resources.repository.htmlUrl}/archive/refs/heads/${reso
     isolation: isolate;
     overflow: hidden;
     scroll-margin-top: 92px;
-    margin-top: 64px;
+    margin-top: 0;
     border: 1px solid rgba(170, 180, 255, 0.28);
     border-radius: 34px;
     color: var(--frost);
@@ -277,7 +277,7 @@ const repositoryZip = `${resources.repository.htmlUrl}/archive/refs/heads/${reso
     box-shadow: 0 0 14px #80edca;
   }
 
-  .course-library h3 {
+  .course-library__header h2 {
     margin: 0;
     font-family: var(--display);
     font-size: clamp(46px, 6vw, 76px);
@@ -474,7 +474,7 @@ const repositoryZip = `${resources.repository.htmlUrl}/archive/refs/heads/${reso
   @media (max-width: 820px) {
     .course-library { margin-top: 34px; border-radius: 24px; }
     .course-library__header { grid-template-columns: 1fr; gap: 28px; padding: 32px 24px; }
-    .course-library h3 { font-size: clamp(42px, 13vw, 60px); }
+    .course-library__header h2 { font-size: clamp(42px, 13vw, 60px); }
     .course-library__stats { justify-content: space-between; }
     .course-library__stats strong { font-size: 27px; }
     .course-library__disclosure > summary { grid-template-columns: minmax(0, 1fr) 42px; gap: 12px; min-height: 72px; }

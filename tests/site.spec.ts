@@ -107,81 +107,44 @@ const readHeroProgress = (page: Page) => page.locator('[data-hero-sequence]').ev
   Number.parseFloat(getComputedStyle(sequence).getPropertyValue('--hero-progress'))
 ));
 
-test('uses one sticky starry scene without a preview or a second background', async ({ page }) => {
+test('one dark hero flows straight into the night content with no daylit band', async ({ page }) => {
   await page.goto('/');
   await expect(page.locator('html')).toHaveAttribute('lang', 'en');
-  await expect(page.getByText('Click to Enter', { exact: true })).toHaveCount(0);
-  await expect(page.getByText('点击进入', { exact: true })).toHaveCount(0);
-  await expect(page.getByText('Preview', { exact: true })).toHaveCount(0);
-  await expect(page.locator('.entry-preview')).toHaveCount(0);
   await expect(page.locator('[data-hero-sequence]')).toHaveCount(1);
-  await expect(page.locator('[data-hero-sticky]')).toHaveCSS('position', 'sticky');
   await expect(page.locator('.hero-media')).toHaveCount(1);
-  await expect(page.locator('.overview-media')).toHaveCount(0);
-
-  const initial = await page.evaluate(() => ({
-    overflowY: getComputedStyle(document.body).overflowY,
-    scrollHeight: document.documentElement.scrollHeight,
-    innerHeight,
-    contentInert: document.querySelector('.content-stage')?.hasAttribute('inert'),
-    sequenceHeight: document.querySelector<HTMLElement>('[data-hero-sequence]')?.offsetHeight ?? 0,
-    stickyHeight: document.querySelector<HTMLElement>('[data-hero-sticky]')?.offsetHeight ?? 0,
-  }));
-  expect(initial.overflowY).not.toBe('hidden');
-  expect(initial.scrollHeight).toBeGreaterThan(initial.innerHeight * 2);
-  expect(initial.contentInert).toBe(false);
-  expect(initial.sequenceHeight).toBeGreaterThan(initial.stickyHeight * 1.8);
-  await expect(page.locator('#overview-deck')).toHaveCSS('visibility', 'hidden');
+  await expect(page.locator('#overview-deck')).toHaveCount(0);
+  await expect(page.getByTestId('audio-orb')).toBeInViewport();
+  await expect(page.locator('.content-stage')).toHaveCSS('background-color', 'rgb(2, 3, 28)');
   await expect.poll(() => readHeroProgress(page)).toBeCloseTo(0, 2);
 
   await page.evaluate(() => {
     document.documentElement.style.scrollBehavior = 'auto';
-    const sequence = document.querySelector<HTMLElement>('[data-hero-sequence]')!;
-    const sticky = document.querySelector<HTMLElement>('[data-hero-sticky]')!;
-    scrollTo(0, sequence.offsetTop + (sequence.offsetHeight - sticky.offsetHeight) * 0.64);
+    scrollTo(0, document.querySelector<HTMLElement>('[data-hero-sequence]')!.offsetHeight);
   });
-  await expect.poll(() => readHeroProgress(page)).toBeGreaterThan(0.6);
-  await expect(page.locator('[data-hero-sequence]')).toHaveAttribute('data-hero-phase', 'morph');
-  await expect(page.locator('#overview-deck')).toHaveCSS('visibility', 'visible');
-
-  await page.evaluate(() => scrollTo(0, 0));
-  await expect.poll(() => readHeroProgress(page)).toBeCloseTo(0, 2);
-  await expect(page.locator('[data-hero-sequence]')).toHaveAttribute('data-hero-phase', 'entry');
-  await expect(page.locator('#overview-deck')).toHaveCSS('visibility', 'hidden');
-  await expect(page.getByTestId('audio-orb')).toBeInViewport();
+  await expect.poll(() => readHeroProgress(page)).toBeGreaterThan(0.9);
 });
 
-test('the center star advances the sticky scene to 94% and scrolling up reverses it', async ({ page }) => {
+test('the hero library button opens the course drawer', async ({ page }) => {
   await page.goto('/');
-  await expect(page.locator('#overview-deck')).toHaveCSS('visibility', 'hidden');
-  await page.getByTestId('overview-button').click();
-  await expect.poll(() => readHeroProgress(page)).toBeCloseTo(0.94, 1);
-  await expect(page.locator('[data-hero-sequence]')).toHaveAttribute('data-hero-phase', 'overview');
-  await expect(page.locator('#overview-deck')).toHaveCSS('visibility', 'visible');
-  await expect.poll(() => page.locator('[data-hero-sequence]').evaluate((sequence) => (
-    Number.parseFloat(getComputedStyle(sequence).getPropertyValue('--deck-opacity'))
-  ))).toBeGreaterThan(0.98);
-  await expect(page.locator('body')).not.toHaveClass(/is-entered/);
-
-  await page.evaluate(() => scrollTo(0, 0));
-  await expect.poll(() => readHeroProgress(page)).toBeCloseTo(0, 2);
-  await expect(page.locator('[data-hero-sequence]')).toHaveAttribute('data-hero-phase', 'entry');
-  await expect(page.locator('#overview-deck')).toHaveCSS('visibility', 'hidden');
-  await expect(page.getByTestId('audio-orb')).toBeInViewport();
+  const disclosure = page.locator('[data-library-disclosure]');
+  await expect(disclosure).not.toHaveAttribute('open', '');
+  await page.getByTestId('hero-library-link').click();
+  await expect(disclosure).toHaveAttribute('open', '');
+  await expect(page.locator('[data-resource-search]')).toBeVisible();
 });
 
 test('navigation highlight returns to Home after scrolling back to the starry scene', async ({ page }) => {
   await page.goto('/');
   await page.evaluate(() => {
     document.documentElement.style.scrollBehavior = 'auto';
-    const projects = document.querySelector<HTMLElement>('#projects')!;
-    scrollTo(0, projects.getBoundingClientRect().top + scrollY);
+    const library = document.querySelector<HTMLElement>('#library')!;
+    scrollTo(0, library.getBoundingClientRect().top + scrollY);
   });
-  await expect(page.locator('[data-nav-link="projects"]')).toHaveClass(/active/);
+  await expect(page.locator('[data-nav-link="library"]')).toHaveClass(/active/);
 
   await page.evaluate(() => scrollTo(0, 0));
   await expect(page.locator('[data-nav-link="home"]')).toHaveClass(/active/);
-  await expect(page.locator('[data-nav-link="projects"]')).not.toHaveClass(/active/);
+  await expect(page.locator('[data-nav-link="library"]')).not.toHaveClass(/active/);
 });
 
 test('attempts audible autoplay immediately at the saved volume', async ({ page }) => {
@@ -222,19 +185,18 @@ test('low frequencies drive a smooth ring waveform through a single media-elemen
   ))).toBe(1);
 });
 
-test('retries blocked autoplay on the first center-star gesture', async ({ page }) => {
+test('retries blocked autoplay on the first click anywhere in the hero', async ({ page }) => {
   await mockMediaPlayback(page, true);
   await page.goto('/');
   await expect(page.getByTestId('music-toggle')).toHaveAttribute('data-state', 'blocked');
   await expect.poll(() => page.evaluate(() => (window as typeof window & { __mediaPlayCalls: number }).__mediaPlayCalls)).toBe(1);
 
-  await page.getByTestId('overview-button').click();
+  await page.locator('#hero-title').click();
   await expect(page.getByTestId('music-toggle')).toHaveAttribute('data-state', 'playing');
   await expect.poll(() => page.evaluate(() => (window as typeof window & { __mediaPlayCalls: number }).__mediaPlayCalls)).toBe(2);
-  await expect.poll(() => readHeroProgress(page)).toBeCloseTo(0.94, 1);
 });
 
-test('a downward touch gesture unlocks music without pressing the center star', async ({ page }) => {
+test('a touch gesture unlocks music', async ({ page }) => {
   await mockMediaPlayback(page, true);
   await page.goto('/');
   await expect(page.getByTestId('music-toggle')).toHaveAttribute('data-state', 'blocked');
@@ -252,6 +214,8 @@ test('uses the supplied account avatar instead of the hero background', async ({
   await page.goto('/');
   const avatar = page.getByTestId('profile-avatar');
   await expect(avatar).toHaveAttribute('alt', "Kanzaler's avatar");
+  await avatar.scrollIntoViewIfNeeded();
+  await expect.poll(() => avatar.evaluate((image: HTMLImageElement) => image.complete && image.naturalWidth > 0)).toBe(true);
   const result = await avatar.evaluate((image: HTMLImageElement) => ({
     loaded: image.complete && image.naturalWidth > 0,
     src: image.currentSrc,
@@ -301,7 +265,6 @@ test('placeholder cards never expose fake links', async ({ page }) => {
 
 test('course resources are grouped, searchable, and directly downloadable', async ({ page }) => {
   await page.goto('/');
-  await expect(page.locator('[data-placeholder="false"]')).toHaveAttribute('href', '#course-resources');
   await expect(page.locator('[data-course-tab]')).toHaveCount(15);
   await expect(page.locator('[data-resource-file]')).toHaveCount(562);
 
@@ -324,7 +287,7 @@ test('course resources are grouped, searchable, and directly downloadable', asyn
 
   await page.locator('[data-library-summary]').click();
   await expect(disclosure).not.toHaveAttribute('open', '');
-  await page.locator('[data-placeholder="false"]').evaluate((card: HTMLAnchorElement) => card.click());
+  await page.getByTestId('hero-library-link').evaluate((link: HTMLAnchorElement) => link.click());
   await expect(disclosure).toHaveAttribute('open', '');
 });
 
@@ -368,6 +331,6 @@ test('mobile navigation opens and closes accessibly', async ({ page }, testInfo)
   const menu = page.getByTestId('menu-toggle');
   await menu.click();
   await expect(menu).toHaveAttribute('aria-expanded', 'true');
-  await page.getByRole('link', { name: /projects/i }).click();
+  await page.getByRole('link', { name: /^library$/i }).click();
   await expect(menu).toHaveAttribute('aria-expanded', 'false');
 });

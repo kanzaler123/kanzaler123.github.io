@@ -70,8 +70,8 @@ export const siteContent: SiteContent = {
   ],
   navigation: [
     { id: 'home', label: { en: 'Home', zhCN: '首页' } },
-    { id: 'projects', label: { en: 'Projects', zhCN: '项目' } },
-    { id: 'notes', label: { en: 'Notes', zhCN: '笔记' } },
+    { id: 'library', label: { en: 'Library', zhCN: '资料库' } },
+    { id: 'writing', label: { en: 'Writing', zhCN: '写作' } },
     { id: 'about', label: { en: 'About', zhCN: '关于' } },
   ],
   socialLinks: [

@@ -2,7 +2,6 @@ const root = document.documentElement;
 const body = document.body;
 const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
 const heroSequence = document.querySelector<HTMLElement>('[data-hero-sequence]');
-const heroSticky = document.querySelector<HTMLElement>('[data-hero-sticky]');
 const entryOrb = document.querySelector<HTMLElement>('.entry-orb');
 const audioWaveLine = document.querySelector<SVGPathElement>('[data-audio-wave-line]');
 const audioWaveEcho = document.querySelector<SVGPathElement>('[data-audio-wave-echo]');
@@ -545,78 +544,28 @@ updateMusicUi(muted ? 'muted' : 'paused');
 // interaction will retry without turning the page into an entrance gate.
 void startAudio();
 
-const overviewButton = document.querySelector<HTMLButtonElement>('#scroll-to-overview');
-overviewButton?.addEventListener('click', () => {
-  if (!actuallyPlaying) void startAudio();
-  void ensureAnalyser(true);
-  if (!heroSequence || !heroSticky) return;
-  const travel = Math.max(1, heroSequence.offsetHeight - heroSticky.offsetHeight);
-  window.scrollTo({
-    top: heroSequence.offsetTop + travel * 0.94,
-    behavior: reduceMotion.matches ? 'auto' : 'smooth',
-  });
-});
-
-// One sticky starry scene, sampled from scroll position in both directions.
-let heroRenderFrame = 0;
+// The audio ring lives in the hero; stop sampling once it has scrolled away.
 const clamp = (value: number, minimum = 0, maximum = 1) => Math.min(maximum, Math.max(minimum, value));
-const smoothstep = (start: number, end: number, value: number) => {
-  const time = clamp((value - start) / (end - start));
-  return time * time * (3 - 2 * time);
-};
-const mix = (start: number, end: number, time: number) => start + (end - start) * time;
+let heroRenderFrame = 0;
 
-function renderHeroSequence() {
+function trackHeroProgress() {
   heroRenderFrame = 0;
-  if (!heroSequence || !heroSticky) return;
-  const travel = Math.max(1, heroSequence.offsetHeight - heroSticky.offsetHeight);
-  const nextProgress = clamp((window.scrollY - heroSequence.offsetTop) / travel);
-  heroProgress = nextProgress;
-
-  const compact = window.innerWidth <= 780;
-  const reduced = reduceMotion.matches;
-  const motion = reduced ? (nextProgress >= 0.5 ? 1 : 0) : smoothstep(0.12, 0.76, nextProgress);
-  const orbExit = reduced ? motion : smoothstep(0.12, 0.62, nextProgress);
-  const buttonExit = reduced ? motion : smoothstep(0.08, 0.34, nextProgress);
-  const deckReveal = reduced ? motion : smoothstep(0.38, 0.84, nextProgress);
-  const hazeReveal = reduced ? motion : smoothstep(0.42, 0.9, nextProgress);
-
-  const initialX = window.innerWidth * 0.5;
-  const finalX = window.innerWidth * (compact ? 0.5 : window.innerWidth <= 1100 ? 0.4 : 0.35);
-  const initialY = window.innerHeight * 0.42;
-  const finalY = window.innerHeight * (compact ? 0.245 : 0.34);
-  const copyMotion = motion;
-
+  if (!heroSequence) return;
+  const nextProgress = clamp(window.scrollY / Math.max(1, heroSequence.offsetHeight));
   heroSequence.style.setProperty('--hero-progress', nextProgress.toFixed(4));
-  heroSequence.style.setProperty('--orb-opacity', (1 - orbExit).toFixed(4));
-  heroSequence.style.setProperty('--orb-scale', mix(1, compact ? 1.38 : 1.62, orbExit).toFixed(4));
-  heroSequence.style.setProperty('--orb-blur', `${mix(0, 6, orbExit).toFixed(2)}px`);
-  heroSequence.style.setProperty('--copy-x', `${mix(initialX, finalX, copyMotion).toFixed(2)}px`);
-  heroSequence.style.setProperty('--copy-y', `${mix(initialY, finalY, copyMotion).toFixed(2)}px`);
-  heroSequence.style.setProperty('--copy-scale', mix(1, compact ? 1.02 : 1.1, copyMotion).toFixed(4));
-  heroSequence.style.setProperty('--button-opacity', (1 - buttonExit).toFixed(4));
-  heroSequence.style.setProperty('--button-y', `${mix(0, 18, buttonExit).toFixed(2)}px`);
-  heroSequence.style.setProperty('--button-scale', mix(1, 0.82, buttonExit).toFixed(4));
-  heroSequence.style.setProperty('--deck-opacity', deckReveal.toFixed(4));
-  heroSequence.style.setProperty('--deck-y', `${mix(150, 0, deckReveal).toFixed(2)}px`);
-  heroSequence.style.setProperty('--deck-scale', mix(0.965, 1, deckReveal).toFixed(4));
-  heroSequence.style.setProperty('--haze-opacity', hazeReveal.toFixed(4));
-
-  const phase = nextProgress < 0.38 ? 'entry' : nextProgress < 0.74 ? 'morph' : 'overview';
-  heroSequence.dataset.heroPhase = phase;
-  overviewButton?.setAttribute('aria-hidden', String(phase !== 'entry'));
-  syncAudioVisualization();
+  const crossedThreshold = (heroProgress < 0.68) !== (nextProgress < 0.68);
+  heroProgress = nextProgress;
+  if (crossedThreshold) syncAudioVisualization();
 }
 
-function scheduleHeroRender() {
-  if (!heroRenderFrame) heroRenderFrame = requestAnimationFrame(renderHeroSequence);
+function scheduleHeroTracking() {
+  if (!heroRenderFrame) heroRenderFrame = requestAnimationFrame(trackHeroProgress);
 }
 
-renderHeroSequence();
-window.addEventListener('scroll', scheduleHeroRender, { passive: true });
-window.addEventListener('resize', scheduleHeroRender, { passive: true });
-window.addEventListener('orientationchange', scheduleHeroRender, { passive: true });
-window.addEventListener('pageshow', scheduleHeroRender);
+trackHeroProgress();
+window.addEventListener('scroll', scheduleHeroTracking, { passive: true });
+window.addEventListener('resize', scheduleHeroTracking, { passive: true });
+window.addEventListener('pageshow', scheduleHeroTracking);
 
 // Scroll reveals and active navigation
 const revealElements = document.querySelectorAll<HTMLElement>('[data-reveal]');
@@ -837,39 +786,3 @@ reduceMotion.addEventListener('change', () => window.location.reload());
     card.addEventListener('blur', () => reset(card));
   });
 })();
-
-// Position dots for the swipeable card deck on narrow screens.
-const deck = document.querySelector<HTMLElement>('#overview-deck');
-const deckDots = Array.from(document.querySelectorAll<HTMLElement>('[data-deck-pager] i'));
-if (deck && deckDots.length) {
-  let frame = 0;
-  const syncDeckPager = () => {
-    frame = 0;
-    const cards = Array.from(deck.querySelectorAll<HTMLElement>('.deck-card'));
-    const maxScroll = deck.scrollWidth - deck.clientWidth;
-    let active = 0;
-    if (maxScroll <= 1 || deck.scrollLeft <= 2) {
-      active = 0;
-    } else if (deck.scrollLeft >= maxScroll - 2) {
-      active = cards.length - 1;
-    } else {
-      const centered = cards[0] && getComputedStyle(cards[0]).scrollSnapAlign === 'center';
-      const deckRect = deck.getBoundingClientRect();
-      const origin = deckRect.left + (centered ? deckRect.width / 2 : 0);
-      let best = Number.POSITIVE_INFINITY;
-      cards.forEach((card, index) => {
-        const cardRect = card.getBoundingClientRect();
-        const position = cardRect.left + (centered ? cardRect.width / 2 : 0);
-        const distance = Math.abs(position - origin);
-        if (distance < best) { best = distance; active = index; }
-      });
-    }
-    deckDots.forEach((dot, index) => dot.classList.toggle('is-active', index === active));
-  };
-  const scheduleDeckPager = () => {
-    if (!frame) frame = requestAnimationFrame(syncDeckPager);
-  };
-  deck.addEventListener('scroll', scheduleDeckPager, { passive: true });
-  window.addEventListener('resize', scheduleDeckPager, { passive: true });
-  syncDeckPager();
-}
