@@ -18,6 +18,8 @@ const projects = siteContent.featuredProjects.map((project) => ({
   github: project.repo ? repoByName.get(project.repo) : undefined,
 }));
 const shelfProjects = projects.filter((project) => project.placeholder);
+// Published projects that live on their own site; the course library has a section of its own.
+const liveProjects = projects.filter((project) => !project.placeholder && project.href?.startsWith('https://'));
 const petals = Array.from({ length: 26 }, (_, index) => ({
   left: (index * 37 + 4) % 100,
   delay: -((index * 1.73) % 18),
@@ -201,6 +203,65 @@ const petals = Array.from({ length: 26 }, (_, index) => ({
       <section id="library" class="content-section library-section" aria-label="FDU Course Resources">
         <CourseLibrary />
       </section>
+
+      {liveProjects.length > 0 && (
+        <section id="projects" class="content-section projects-section" aria-labelledby="projects-title">
+          <div class="writing-heading" data-reveal>
+            <h2 id="projects-title">
+              <span class="lang-copy lang-copy--en">Small worlds I have built</span>
+              <span class="lang-copy lang-copy--zh">我搭建的小世界</span>
+            </h2>
+            <p>
+              <span class="lang-copy lang-copy--en">Research prototypes you can open and try in the browser.</span>
+              <span class="lang-copy lang-copy--zh">可以直接在浏览器里打开、上手试一试的研究原型。</span>
+            </p>
+          </div>
+
+          <div class="shelf-grid">
+            {liveProjects.map((project) => (
+              <article class="shelf-card project-card" data-project={project.id} data-reveal data-tilt>
+                <div class="shelf-card__art"><CardArt variant={project.art} /></div>
+                <div class="shelf-card__body">
+                  <p class="card-kicker">
+                    <span class="lang-copy lang-copy--en">{project.category.en}</span>
+                    <span class="lang-copy lang-copy--zh">{project.category.zhCN}</span>
+                    {project.github?.language && <span> · {project.github.language}</span>}
+                  </p>
+                  <h3>
+                    <span class="lang-copy lang-copy--en">{project.title.en}</span>
+                    <span class="lang-copy lang-copy--zh">{project.title.zhCN}</span>
+                  </h3>
+                  <p>
+                    <span class="lang-copy lang-copy--en">{project.summary.en}</span>
+                    <span class="lang-copy lang-copy--zh">{project.summary.zhCN}</span>
+                  </p>
+                  <ul class="project-tags" aria-label="Tags">
+                    {project.tags.map((tag) => <li>{tag}</li>)}
+                  </ul>
+                  <div class="project-links">
+                    <a class="project-link project-link--primary" href={project.href} target="_blank" rel="noreferrer">
+                      <span class="lang-copy lang-copy--en">{project.cta?.en ?? 'Open'}</span>
+                      <span class="lang-copy lang-copy--zh">{project.cta?.zhCN ?? '打开'}</span>
+                      <span aria-hidden="true">↗</span>
+                    </a>
+                    {project.repo && (
+                      <a
+                        class="project-link"
+                        href={project.github?.htmlUrl ?? `https://github.com/kanzaler123/${project.repo}`}
+                        target="_blank"
+                        rel="noreferrer"
+                      >
+                        <span class="lang-copy lang-copy--en">Source</span>
+                        <span class="lang-copy lang-copy--zh">源代码</span>
+                      </a>
+                    )}
+                  </div>
+                </div>
+              </article>
+            ))}
+          </div>
+        </section>
+      )}
 
       <section id="writing" class="content-section writing-section" aria-labelledby="writing-title">
         <div class="writing-heading" data-reveal>

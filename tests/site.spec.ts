@@ -263,6 +263,24 @@ test('placeholder cards never expose fake links', async ({ page }) => {
   await expect(placeholders.locator('a')).toHaveCount(0);
 });
 
+test('projects section links to the live policy sandbox and its source', async ({ page }) => {
+  await page.goto('/');
+  await expect(page.locator('[data-nav-link="projects"]')).toHaveAttribute('href', '#projects');
+
+  const card = page.locator('#projects [data-project="policy-sandbox"]');
+  await expect(card).toHaveCount(1);
+  await expect(card).not.toHaveAttribute('data-placeholder', 'true');
+
+  const open = card.locator('a.project-link--primary');
+  await expect(open).toHaveAttribute('href', 'https://kanzaler123.github.io/financial-ABM/');
+  await expect(open).toHaveAttribute('target', '_blank');
+  await expect(open).toHaveAttribute('rel', /noreferrer/);
+  await expect(card.locator('a[href="https://github.com/kanzaler123/financial-ABM"]')).toHaveCount(1);
+
+  await page.getByTestId('locale-toggle').click();
+  await expect(card.locator('h3')).toContainText('漂绿政策沙盘');
+});
+
 test('course resources are grouped, searchable, and directly downloadable', async ({ page }) => {
   await page.goto('/');
   await expect(page.locator('[data-course-tab]')).toHaveCount(15);

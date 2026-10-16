@@ -18,6 +18,7 @@ The source FLAC stays outside the repository. Only the generated `public/audio/s
 - Edit bilingual profile and featured cards in `src/content/site.ts`.
 - Add Markdown or MDX notes under `src/content/notes/`.
 - Add a `repo` name to a featured project to merge live metadata from the build-time GitHub snapshot.
+- A non-placeholder featured project with an external `https://` link appears as a linked card in the Projects section (`cta` sets its button label).
 
 ## Quality checks
 

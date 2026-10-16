@@ -11,7 +11,7 @@ export interface SocialLink {
   href: string;
 }
 
-export type CardArtVariant = 'notes' | 'library' | 'reading';
+export type CardArtVariant = 'notes' | 'library' | 'reading' | 'market';
 
 export interface FeaturedProject {
   id: string;
@@ -19,7 +19,10 @@ export interface FeaturedProject {
   summary: LocalizedText;
   category: LocalizedText;
   repo?: string;
+  /** An external https link puts a published project in the Projects section. */
   href?: string;
+  /** Label of the card's main link (Projects section only). */
+  cta?: LocalizedText;
   tags: string[];
   placeholder: boolean;
   art: CardArtVariant;
@@ -71,6 +74,7 @@ export const siteContent: SiteContent = {
   navigation: [
     { id: 'home', label: { en: 'Home', zhCN: '首页' } },
     { id: 'library', label: { en: 'Library', zhCN: '资料库' } },
+    { id: 'projects', label: { en: 'Projects', zhCN: '项目' } },
     { id: 'writing', label: { en: 'Writing', zhCN: '写作' } },
     { id: 'about', label: { en: 'About', zhCN: '关于' } },
   ],
@@ -107,6 +111,21 @@ export const siteContent: SiteContent = {
       tags: ['FDU', 'Education', 'Open Resource'],
       placeholder: false,
       art: 'library',
+    },
+    {
+      id: 'policy-sandbox',
+      title: { en: 'Greenwashing Policy Sandbox', zhCN: '漂绿政策沙盘' },
+      summary: {
+        en: 'A multi-agent artificial market. Move transparency, fines and audits, and watch 200 synthetic firms choose between real improvement and greenwashing.',
+        zhCN: '一个多智能体人工市场。调节透明度、罚款和核查，看 200 家合成企业在真实改善与漂绿之间怎样选择。',
+      },
+      category: { en: 'Research', zhCN: '研究' },
+      repo: 'financial-ABM',
+      href: 'https://kanzaler123.github.io/financial-ABM/',
+      cta: { en: 'Open the sandbox', zhCN: '打开沙盘' },
+      tags: ['Agent-based model', 'ESG', 'Policy'],
+      placeholder: false,
+      art: 'market',
     },
     {
       id: 'paper-reading',
