@@ -11,7 +11,7 @@ export interface SocialLink {
   href: string;
 }
 
-export type CardArtVariant = 'notes' | 'library' | 'reading' | 'market';
+export type CardArtVariant = 'notes' | 'library' | 'reading' | 'market' | 'ghost-rehearsal';
 
 export interface FeaturedProject {
   id: string;
@@ -126,6 +126,21 @@ export const siteContent: SiteContent = {
       tags: ['Agent-based model', 'ESG', 'Policy'],
       placeholder: false,
       art: 'market',
+    },
+    {
+      id: 'ghost-rehearsal',
+      title: { en: 'Ghost Rehearsal', zhCN: '幽灵彩排' },
+      summary: {
+        en: 'Build an event flow and run the same simulated guests through two staffing plans. Replay both plans side by side to see where lines form and how long guests wait.',
+        zhCN: '搭建活动流程，让同一批模拟来宾在两种人员配置下各走一遍。并排回放，看看队伍在哪里积压、来宾要等多久。',
+      },
+      category: { en: 'Event Simulation', zhCN: '活动仿真' },
+      repo: 'ghost-rehearsal',
+      href: 'https://kanzaler123.github.io/ghost-rehearsal/',
+      cta: { en: 'Try the demo', zhCN: '体验演示' },
+      tags: ['Kiroween 2026', 'Discrete-event simulation', 'A/B comparison'],
+      placeholder: false,
+      art: 'ghost-rehearsal',
     },
     {
       id: 'paper-reading',

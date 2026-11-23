@@ -755,6 +755,7 @@ html[data-locale='zh-CN'] .lang-copy--en {
 }
 
 .card-art--market { object-position: center top; }
+.card-art--ghost-rehearsal { object-position: 86% center; }
 
 .shelf-card:hover .card-art { transform: scale(1.07); }
 

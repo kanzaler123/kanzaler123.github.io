@@ -1,24 +1,30 @@
 ---
 import { Image } from 'astro:assets';
+import ghostRehearsalCover from '../assets/ghost-rehearsal-cover.webp';
+import marketCover from '../assets/market-cover.png';
 import notesCover from '../assets/night-notes-cover.png';
 import readingCover from '../assets/paper-reading-cover.png';
-import marketCover from '../assets/market-cover.png';
-
-export type CardArtVariant = 'notes' | 'library' | 'reading' | 'market';
+import type { CardArtVariant } from '../content/site';
 
 interface Props {
   variant: CardArtVariant;
 }
 
 const { variant } = Astro.props;
-// Gradient/mask ids must be unique — three of these render on the same page.
+const coverByVariant = {
+  'ghost-rehearsal': ghostRehearsalCover,
+  market: marketCover,
+  notes: notesCover,
+  reading: readingCover,
+};
+const cover = variant === 'library' ? undefined : coverByVariant[variant];
 const uid = `art-${variant}`;
 ---
 
-{variant === 'notes' && (
+{cover && (
   <Image
-    src={notesCover}
-    class="card-art card-art--notes"
+    src={cover}
+    class={`card-art card-art--${variant}`}
     alt=""
     widths={[320, 480, 720, 960]}
     sizes="(max-width: 780px) 100vw, 480px"
@@ -80,30 +86,4 @@ const uid = `art-${variant}`;
       <circle cx="292" cy="66" r="1.1" />
     </g>
   </svg>
-)}
-
-{variant === 'reading' && (
-  <Image
-    src={readingCover}
-    class="card-art card-art--reading"
-    alt=""
-    widths={[320, 480, 720, 960]}
-    sizes="(max-width: 780px) 100vw, 480px"
-    format="webp"
-    quality={84}
-    loading="lazy"
-  />
-)}
-
-{variant === 'market' && (
-  <Image
-    src={marketCover}
-    class="card-art card-art--market"
-    alt=""
-    widths={[320, 480, 720, 960]}
-    sizes="(max-width: 780px) 100vw, 480px"
-    format="webp"
-    quality={84}
-    loading="lazy"
-  />
 )}
